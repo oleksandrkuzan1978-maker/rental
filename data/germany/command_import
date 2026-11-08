@@ -1,0 +1,26 @@
+python manage.py makemigrations listings
+python manage.py migrate
+python manage.py import_cities --file data/germany/AuszugGV3QAktuell - Copy.xlsx
+
+python manage.py shell #Проверка данных в Django Shell
+
+Затем:
+from apps.listings.models import State, City
+
+State.objects.count()
+# 16
+
+City.objects.count()
+# 10943
+
+Проверим, например, муниципалитеты земли Nordrhein-Westfalen:
+nrw = State.objects.get(code="05")
+
+nrw.name
+# 'Nordrhein-Westfalen'
+
+nrw.cities.count()
+
+А вот так можно получить муниципалитеты вместе с названиями земель:
+
+City.objects.select_related("state").all()

@@ -46,12 +46,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
 
+    'apps.base.apps.BaseConfig',
     'apps.users.apps.UsersConfig',
     'apps.static.apps.StaticConfig',
     'apps.reviews.apps.ReviewsConfig',
     'apps.bookings.apps.BookingsConfig',
     'apps.analytics.apps.AnalyticsConfig',
     'apps.listings.apps.ListingsConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -108,7 +110,7 @@ else:
     }
 
 
-
+AUTH_USER_MODEL = "users.User"
 
 
 # Password validation
