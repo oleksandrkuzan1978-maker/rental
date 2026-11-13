@@ -1,3 +1,8 @@
+"""Импорт земель и муниципалитетов из справочника Destatis.
+
+Используйте команду python manage.py import_cities --file ПУТЬ_К_XLSX.
+"""
+
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
@@ -7,9 +12,12 @@ from apps.listings.models import City, State
 
 
 class Command(BaseCommand):
+    """Команда Django для импорта записей State и City из XLSX."""
+
     help = "Import German municipalities from Destatis Excel file"
 
     def add_arguments(self, parser):
+        """Добавить обязательный параметр --file с путём к XLSX."""
         parser.add_argument(
             '--file'
             , required=True
@@ -17,9 +25,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def normalize_code(value, length):
-        """
-        Converts a code into a string of the required length.
-        Example: 1 -> '01', 5 -> '005'.
+        """Преобразовать значение в целое число и дополнить код нулями слева.
+
+        Параметр length задаёт длину результата. Отсутствующее значение
+        или число за пределами допустимого диапазона вызывает ValueError.
         """
         if value is None:
             raise ValueError("Code cannot be empty")
@@ -34,6 +43,10 @@ class Command(BaseCommand):
         return str(number).zfill(length)
 
     def handle(self, *args, **options):
+        """Загрузить земли и муниципалитеты и вывести число обработанных строк.
+
+        Записи добавляются или обновляются в одной транзакции.
+        """
         file_path = Path(options["file"])
 
         if not file_path.exists():

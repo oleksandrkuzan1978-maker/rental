@@ -1,7 +1,19 @@
+python = ".\.venv\Scripts\python.exe"
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+
+python manage.py import_cities --file "data\germany\AuszugGV3QAktuell - Copy.xlsx"
+python manage.py import_districts --file "data\germany\gn250.utm32s.csv.zip"
+python manage.py seed_demo
+
+
+
 python manage.py makemigrations listings
 python manage.py migrate
 python manage.py import_cities --file data/germany/AuszugGV3QAktuell - Copy.xlsx
-
+Лучше: python manage.py import_cities --file "data/germany/AuszugGV3QAktuell - Copy.xlsx"
 python manage.py shell #Проверка данных в Django Shell
 
 Затем:
@@ -24,3 +36,4 @@ nrw.cities.count()
 А вот так можно получить муниципалитеты вместе с названиями земель:
 
 City.objects.select_related("state").all()
+

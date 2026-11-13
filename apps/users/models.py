@@ -1,4 +1,5 @@
 """Модель пользователя с входом по email и дополнительными данными профиля."""
+from sys import is_stack_trampoline_active
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
@@ -9,7 +10,8 @@ from apps.base.models import TimeStampModel, UUIDModel
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel):
-    """Пользователь с входом по email, контактными данными, должностью и проектом."""
+    """Аккаунт с входом по email, контактными данными и правами Django."""
+
     #username = models.CharField(_("username"), max_length=50, unique=True
                                 #, error_messages={'unique': _("This username already exists.")})
     first_name = models.CharField(_("first name"), max_length=40)
@@ -33,8 +35,20 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel):
     objects = UserManager()
 
     class Meta:
+        """Порядок выдачи аккаунтов и ограничение мягкого удаления."""
+
+        db_table = _("users")
         verbose_name = _("user")
         verbose_name_plural = _("users")
+        ordering = ["-created_at"]
+        #Условие означает, что у записи либо нет даты удаления, либо аккаунт деактивирован.
+        # Неактивный аккаунт без даты удаления тоже допустим.
+        constraints = [models.CheckConstraint(condition=(models.Q(deleted_at__isnull=True)
+                                                         | models.Q(is_active=False))
+                                              , name="user_deleted_requires_inactive")]
+
+    # def has_role(self, role):
+    #     return self.groups.filter(name=role).exists()
 
     def __str__(self):
         """Вернуть имя пользователя."""
