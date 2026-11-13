@@ -34,7 +34,7 @@ class UserAdmin(BaseUserAdmin):
     add_form = UserAddForm
     form = UserEditForm
 
-    list_display = ("email", "first_name", "is_active", "is_staff", "created_at")
+    list_display = ("email", "first_name", "is_active", "is_staff", "is_superuser", "created_at")
     search_fields = ("email", "first_name")
     list_filter = ("is_active", "is_staff", "is_superuser")
     ordering = ("-created_at",)

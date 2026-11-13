@@ -79,7 +79,8 @@ REST_FRAMEWORK = {'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.Dja
                  ],
             'DEFAULT_THROTTLE_RATES': {
                     'anon': '100/m',
-                    'user': '100/m'
+                    'user': '100/m',
+                    'auth': '10/m', # юзер может совершить не более 10 попыток залогинится в минуту
                 },
               }
 
@@ -91,6 +92,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True, # при refresh генерить новый refresh
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
+    'CHECK_REVOKE_TOKEN': True, # Если юзер поменял пароль, то старый токен будет не действителен
 }
 
 ROOT_URLCONF = 'config.urls'
