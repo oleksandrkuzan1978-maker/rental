@@ -14,9 +14,9 @@ class ReviewAdmin(admin.ModelAdmin):
     """Настройки просмотра и поиска отзывов в админке."""
 
     list_display = ('id', 'rating', 'comment')
-    list_select_related = ('user', 'property', 'booking')
-    search_fields = ('user__email', "property__title", "rating")
-    list_filter = ("user__email",)
+    list_select_related = ("booking__user", "booking__property")
+    search_fields = ('booking__user__email', "booking__property__title", "rating")
+    list_filter = ("booking__user__email",)
     ordering = ('-rating',)
 
 # Register your models here.

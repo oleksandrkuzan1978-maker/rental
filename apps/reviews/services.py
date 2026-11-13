@@ -10,21 +10,23 @@ def create_review(*, user, booking_id, rating, comment=""):
     """Проверить, сохранить и вернуть отзыв арендатора.
 
     Передайте текущего пользователя user, идентификатор брони booking_id
-    и оценку rating по имени. Параметр comment необязателен. Для гостя
-    возникает PermissionDenied, а ошибки модели вызывают ValidationError.
+    и оценку rating по имени. Параметр comment необязателен. Гость и
+    пользователь, которому не принадлежит бронь, получают PermissionDenied.
+    Ошибки модели вызывают ValidationError.
     """
     if not user.is_authenticated:
         raise PermissionDenied()
     booking = Booking.objects.select_for_update().get(pk=booking_id)
 
+    if booking.user_id != user.pk:
+        raise PermissionDenied()
+
     review = Review(
-        user=user,
         booking=booking,
-        property_id=booking.property_id,
         rating=rating,
         comment=comment
     )
-    review.full_clean() # отклонит незавершённую бронь и автора, который не совпадает с её арендатором
+    review.full_clean()
     review.save()
     return review
 

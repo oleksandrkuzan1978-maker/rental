@@ -1,7 +1,6 @@
 """Маршруты главной страницы и административного сайта проекта."""
 
 from django.contrib import admin
-from django.contrib.auth.views import LoginView
 from django.urls import path, include
 from apps.base.index import index
 
