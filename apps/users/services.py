@@ -21,17 +21,17 @@ def soft_delete_user(*, user_id):
 
 
 @transaction.atomic
-def register_user(*, email, first_name, password):
+def register_user(*, email, name, password):
     """Создать пользователя и добавить его в группу Tenant.
 
-    Передайте email, first_name и password по имени. Вернуть новый аккаунт.
+    Передайте email, name и password по имени. Вернуть новый аккаунт.
     Если группа Tenant отсутствует, вызвать Group.DoesNotExist.
     """
     tenant = Group.objects.get(name=_('Tenant'))
 
     user = User.objects.create_user(
         email=email,
-        first_name=first_name,
+        name=name,
         password=password,
     )
     user.groups.add(tenant)

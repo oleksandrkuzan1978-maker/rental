@@ -14,7 +14,7 @@ class UserAddForm(BaseUserCreationForm):
         """Модель и поля формы создания пользователя."""
 
         model = User
-        fields = ("email", "first_name", "phone")
+        fields = ("email", "name", "phone")
 
 
 class UserEditForm(UserChangeForm):
@@ -34,15 +34,15 @@ class UserAdmin(BaseUserAdmin):
     add_form = UserAddForm
     form = UserEditForm
 
-    list_display = ("email", "first_name", "is_active", "is_staff", "is_superuser", "created_at")
-    search_fields = ("email", "first_name")
+    list_display = ("email", "name", "is_active", "is_staff", "is_superuser", "created_at")
+    search_fields = ("email", "name")
     list_filter = ("is_active", "is_staff", "is_superuser")
     ordering = ("-created_at",)
     readonly_fields = ("last_login", "created_at", "updated_at", "deleted_at")
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Профиль", {"fields": ("first_name", "phone")}),
+        ("Профиль", {"fields": ("name", "phone")}),
         ("Доступ", {"fields": (
             "is_active", "is_staff", "is_superuser", "groups", "user_permissions",
         )}),
@@ -51,7 +51,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("email", "first_name", "phone", "password1", "password2"),
+            "fields": ("email", "name", "phone", "password1", "password2"),
         }),
     )
 

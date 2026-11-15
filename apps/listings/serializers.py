@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Property, PropertyFile
+from .models import Property, PropertyFile, State, City
 
 
 class PropertyFileSerializer(serializers.ModelSerializer):
@@ -17,10 +17,24 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'files']
 
     def get_files(self, obj):
-        files = obj.files.filter(is_deleted=False)
+        files = obj.files.all()
 
         return PropertyFileSerializer(
             files,
             many=True,
             context=self.context
         ).data
+
+
+class StateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = State
+        fields = ("code", "name")
+
+
+class CitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = City
+        fields = ("id", "ags", "name", "state")

@@ -71,7 +71,10 @@ class Property(UUIDModel, TimeStampModel):
                 name="property_rooms_positive_or_null",
             ),
             models.CheckConstraint(condition=models.Q(property_type__in=Types.values),
-                                   name='property_type_valid')]
+                                   name='property_type_valid')
+            , models.CheckConstraint(condition=(models.Q(deleted_at__isnull=True)
+                                                         | models.Q(is_active=False))
+                                     , name='property_deleted_at')]
 
     def soft_delete(self):
         with transaction.atomic():
@@ -84,9 +87,6 @@ class Property(UUIDModel, TimeStampModel):
                 'is_active',
                 'deleted_at'
             ])
-            self.files.update(
-                deleted_at=now
-            )
 
     def __str__(self):
         """Вернуть заголовок объявления вместе с его идентификатором."""
@@ -104,14 +104,6 @@ class PropertyFile(UUIDModel, TimeStampModel):
     property = models.ForeignKey(Property, on_delete=models.CASCADE
                                  , related_name="files"
                                  , verbose_name=_("Property"))
-    deleted_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
-    # Подумать про еще пару полей:
-    # is_main	BOOLEAN	Главное фото
-    # sort_order	INT UNSIGNED	Порядок отображения
-    # created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
 
     class Meta:
         """Настройки таблицы и порядка выдачи вложений."""
@@ -221,3 +213,5 @@ class Address(models.Model):
         db_table = 'addresses'
         verbose_name = _('Address')
         verbose_name_plural = _('Addresses')
+        ordering = ['city', 'street', 'pk']
+

@@ -1,22 +1,28 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
+EMAIL_TAKEN = _("Email already exists")
+
+def email_exists(email):
+    return User.objects.filter(email__iexact=email).exists()
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     class Meta:
         model = User
-        fields  = ['id', 'first_name', 'email', 'password']
+        fields  = ['id', 'name', 'email', 'password']
         read_only_fields = ('id',)
 
     def validate_email(self, email):
         email = email.lower()
         if User.objects.filter(email__iexact=email).first():
-            raise serializers.ValidationError(_("Email already exists"))
+            raise serializers.ValidationError(EMAIL_TAKEN)
         return email
 
     def validate(self, attrs):
@@ -34,14 +40,23 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        try:
+            with transaction.atomic():
+                return User.objects.create_user(**validated_data)
+        except IntegrityError as e:
+            # Другой запрос мог занять email после проверки.
+            if email_exists(validated_data["email"]):
+                raise serializers.ValidationError({'email': EMAIL_TAKEN}) from e
+            raise
+    # def create(self, validated_data):
+    #     return User.objects.create_user(**validated_data)
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'email', 'phone', 'created_at', 'updated_at']
-        read_only_fields = ('id',) #'first_name', 'email'
+        fields = ['id', 'name', 'email', 'phone', 'created_at', 'updated_at']
+        read_only_fields = ('id',) #'name', 'email'
 
 
 class ChangePasswordSerializer(serializers.Serializer):

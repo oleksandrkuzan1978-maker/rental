@@ -4,12 +4,12 @@ from django.contrib.auth.base_user import BaseUserManager
 
 class UserManager(BaseUserManager):
     """Создание пользователей с нормализацией email и хешированием пароля."""
-
+    # в коде регистрации пользователя использовать этот метод: User.objects.create_user(email=..., password=...)
     def create_user(self, email, password, **extra_fields): # **extra_fields передаёт дополнительные поля:
                                                                  # имя, фамилию, username и другие.
         """Создать и вернуть пользователя с хешированным паролем.
 
-        Требуются email, password и first_name в extra_fields. При отсутствии
+        Требуются email, password и name в extra_fields. При отсутствии
         любого из этих значений вызвать ValueError.
         """
         if not email:
@@ -17,7 +17,7 @@ class UserManager(BaseUserManager):
         if not password:
             raise ValueError("Users must have a password")
 
-        field = "first_name"
+        field = "name"
         if not extra_fields.get(field):
             raise ValueError(f'Field {field} is required')
 

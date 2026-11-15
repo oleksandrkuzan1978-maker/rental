@@ -1,5 +1,4 @@
 """Модель бронирования и допустимые статусы заявки."""
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -9,17 +8,22 @@ from django.conf import settings
 from apps.listings.models import Property
 
 # Create your models here.
+
+
+class Status(models.TextChoices):
+    """Допустимые статусы заявки на бронирование."""
+
+    PENDING = 'pending', _('Pending')
+    CONFIRMED = 'confirmed', _('Confirmed')
+    REJECTED = 'rejected', _('Rejected')
+    CANCELLED = 'cancelled', _('Cancelled')
+    COMPLETED = 'completed', _('Completed')
+
+
 class Booking(UUIDModel, TimeStampModel):
     """Заявка арендатора на проживание с датами, стоимостью и статусом."""
 
-    class Status(models.TextChoices):
-        """Допустимые статусы заявки на бронирование."""
-
-        PENDING = 'pending', _('Pending')
-        CONFIRMED = 'confirmed', _('Confirmed')
-        REJECTED = 'rejected', _('Rejected')
-        CANCELLED = 'cancelled', _('Cancelled')
-        COMPLETED = 'completed', _('Completed')
+    Status = Status
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL
                              , on_delete=models.PROTECT
@@ -44,7 +48,10 @@ class Booking(UUIDModel, TimeStampModel):
         verbose_name_plural = _('Bookings')
         ordering = ['-created_at']
         constraints = [models.CheckConstraint(condition=models.Q(end_date__gt=models.F('start_date'))
-                                              , name='booking_end_after_start' )]
+                                              , name='booking_end_after_start' )
+            , models.CheckConstraint(condition=models.Q(status__in=Status.values)
+                                     , name='booking_status_in')
+                                      ]
         indexes = [models.Index(fields=["property", "status", 'start_date']
                                 , name="booking_prop_status_start_idx")]
         """Эта запись создаёт один составной индекс по трём полям в указанном порядке: property, status, start_date. 
