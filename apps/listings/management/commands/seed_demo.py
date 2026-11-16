@@ -130,9 +130,9 @@ class Command(BaseCommand):
             end_date=today + timedelta(days=16),
         )
 
-        PropertyView.objects.create(property=berlin, user=tenant)
         PropertyView.objects.create(property=berlin)
-        PropertyView.objects.create(property=dortmund, user=tenant)
+        PropertyView.objects.create(property=berlin)
+        PropertyView.objects.create(property=dortmund)
         SearchHistory.objects.create(user=tenant, query="Wohnung Berlin")
         SearchHistory.objects.create(query="Wohnung Berlin")
         SearchHistory.objects.create(user=tenant, query="Studio Dortmund")

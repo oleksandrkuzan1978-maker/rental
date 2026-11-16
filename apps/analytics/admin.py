@@ -14,9 +14,9 @@ class PropertyViewAdmin(admin.ModelAdmin):
     """Настройки поиска и фильтрации просмотров в админке."""
 
     list_display = ('id', 'created_at')
-    list_select_related = ('user', 'property')
-    search_fields = ('user__email', "property__id")
-    list_filter = ("user__email", 'property_id')
+    list_select_related = ('property',)
+    search_fields = ("property__id",)
+    list_filter = ('property_id',)
     ordering = ('-created_at',)
 
 

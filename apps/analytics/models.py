@@ -13,11 +13,6 @@ class PropertyView(TimeStampMod, UUIDModel):
 
     property = models.ForeignKey(Property, on_delete=models.CASCADE
                                  , related_name="views", verbose_name=_('Property'))
-    # user может быть NULL, если просмотр объявления доступен незарегистрированным посетителям.
-    user = models.ForeignKey(settings.AUTH_USER_MODEL
-                             , null=True, blank=True
-                             , on_delete=models.SET_NULL
-                             , related_name="views", verbose_name=_('User'))
 
     class Meta:
         """Настройки таблицы и индекса по объявлению и времени просмотра."""
@@ -30,11 +25,7 @@ class PropertyView(TimeStampMod, UUIDModel):
 
         ## Внутри обработчика после получения доступного посетителю объявления.
             # if request.method == "GET":
-            #     PropertyView.objects.create(
-            #         property=listing,
-            #         user=request.user if request.user.is_authenticated else None,
-            #     )
-
+            #     PropertyView.objects.create(property=listing)
 
         # Как посчитать просмотры за период?
         # views_count = PropertyView.objects.filter(
