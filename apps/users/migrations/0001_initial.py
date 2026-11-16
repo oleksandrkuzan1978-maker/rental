@@ -5,6 +5,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Начальная схема пользовательской модели."""
 
     initial = True
 

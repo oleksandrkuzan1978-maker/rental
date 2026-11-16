@@ -17,7 +17,7 @@ from django.utils import timezone
 from apps.analytics.models import PropertyView, SearchHistory
 from apps.bookings.models import Booking
 from apps.bookings.services import confirm_booking, create_booking
-from apps.listings.models import Address, City, Property, PropertyFile, Types
+from apps.listings.models import City, Property, PropertyFile, Types
 from apps.reviews.services import create_review
 from apps.users.models import User
 
@@ -86,6 +86,10 @@ class Command(BaseCommand):
             property_type=Types.APARTMENT,
             price_per_night=Decimal("79.90"),
             rooms=2,
+            city=cities["11000000"],
+            street="Demo-Straße",
+            house="12a",
+            plz="10115",
         )
         dortmund = Property.objects.create(
             user=landlord,
@@ -94,12 +98,10 @@ class Command(BaseCommand):
             property_type=Types.STUDIO,
             price_per_night=Decimal("59.00"),
             rooms=1,
-        )
-        Address.objects.create(
-            property=berlin, city=cities["11000000"], street="Demo-Straße", house="12a", plz="10115"
-        )
-        Address.objects.create(
-            property=dortmund, city=cities["05913000"], street="Demo-Weg", house="5", plz="44135"
+            city=cities["05913000"],
+            street="Demo-Weg",
+            house="5",
+            plz="44135",
         )
 
         today = timezone.localdate()

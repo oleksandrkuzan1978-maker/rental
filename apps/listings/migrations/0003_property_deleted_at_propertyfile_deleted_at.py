@@ -4,6 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Поля времени мягкого удаления для объявлений и файлов."""
 
     dependencies = [
         ('listings', '0002_initial'),

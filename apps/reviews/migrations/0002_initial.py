@@ -6,6 +6,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Связь отзыва с пользователем и ограничение диапазона оценок."""
 
     initial = True
 

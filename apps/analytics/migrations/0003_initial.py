@@ -6,6 +6,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Связи просмотров и записей истории поиска с пользователями."""
 
     initial = True
 

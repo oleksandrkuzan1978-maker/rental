@@ -6,6 +6,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Связь бронирований с арендаторами, индекс поиска и ограничение дат."""
 
     initial = True
 

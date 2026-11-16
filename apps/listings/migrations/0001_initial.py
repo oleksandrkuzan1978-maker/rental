@@ -8,6 +8,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Начальная схема объявлений, файлов и справочников адресов."""
 
     initial = True
 

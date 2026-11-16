@@ -16,32 +16,44 @@ LogoutView = TokenBlacklistView
 
 
 class AuthThrottleMixin:
+    """Общий лимит запросов для представлений аутентификации."""
+
     throttle_classes = (ScopedRateThrottle,)
     throttle_scope = "auth"
 
 
 class RefreshView(AuthThrottleMixin, TokenRefreshView):
+    """Представление для обновления JWT с ограничением частоты запросов."""
+
     pass
 
 
 class LogoutAllView(APIView):
+    """Представление для отзыва refresh-токенов текущего пользователя."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        """Отозвать refresh-токены пользователя и вернуть HTTP 204."""
         blacklist_all_tokens(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LoginView(AuthThrottleMixin, TokenObtainPairView):
+    """Представление для выдачи пары JWT с ограничением частоты запросов."""
+
     pass
 
 
 class RegisterView(AuthThrottleMixin, generics.CreateAPIView):
+    """Представление для регистрации и выдачи токенов новому пользователю."""
+
     serializer_class = UserRegisterSerializer
     authentication_classes = []
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
+        """Зарегистрировать пользователя и вернуть его профиль и пару JWT."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -52,9 +64,12 @@ class RegisterView(AuthThrottleMixin, generics.CreateAPIView):
 
 
 class ChangePasswordView(APIView):
+    """Представление для смены пароля текущего пользователя."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        """Сменить пароль, отозвать старые refresh-токены и выдать новую пару JWT."""
         serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()

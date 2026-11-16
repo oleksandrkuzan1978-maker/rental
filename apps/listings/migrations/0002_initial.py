@@ -6,6 +6,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    """Связи владельцев, адресов и файлов с объявлениями и настройки справочников."""
 
     initial = True
 

@@ -1,5 +1,5 @@
 """Создание и подтверждение заявок на бронирование."""
-
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from apps.listings.models import  Property
 from .models import Booking
@@ -43,6 +43,13 @@ def  confirm_booking(*, property_id, booking_id):
         booking.save(update_fields=['status', "updated_at"])
         return booking
 
+def _add_one_year(day):
+    """Вернуть ту же дату через год, заменяя 29 февраля на 28 февраля."""
+    if day.month == 2 and day.day == 29:
+        return day.replace(year=day.year + 1, day=28)
+
+    return day.replace(year=day.year + 1)
+
 @transaction.atomic # На MySQL/InnoDB транзакция удержит блокировку объявления до сохранения брони,
 # поэтому параллельное отключение объявления не сможет вклиниться между проверкой и записью.
 def create_booking(*, user, property_id, start_date, end_date):
@@ -53,6 +60,17 @@ def create_booking(*, user, property_id, start_date, end_date):
     исключается из числа оплачиваемых ночей. Недоступное объявление
     или недопустимые данные вызывают ValidationError.
     """
+    today = timezone.localdate()
+
+    if start_date < today:
+        raise ValidationError(_("The arrival date cannot be in the past."))
+    if start_date > _add_one_year(today):
+        raise ValidationError(_("You can book a stay up to a year in advance."))
+    if end_date <= start_date:
+        raise ValidationError(_("The departure date must be later than the arrival date."))
+    if end_date > _add_one_year(start_date):
+        raise ValidationError(_("The stay cannot exceed one year."))
+
     # День выезда не входит в число оплачиваемых ночей.
     nights = (end_date - start_date).days
 

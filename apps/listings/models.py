@@ -18,6 +18,82 @@ from django.conf import settings
 # Create your models here.
 
 
+class State(models.Model):
+    """Федеральная земля Германии с двухзначным кодом."""
+
+    name = models.CharField(max_length=80, unique=True, verbose_name=_("Federal state"))
+    code = models.CharField(max_length=2
+                            , primary_key=True
+                            , validators=[state_code_validator]
+                            , verbose_name=_("Federal state code"))
+
+    class Meta:
+        """Настройки таблицы и алфавитной сортировки земель."""
+
+        db_table = 'states'
+        ordering = ['name']
+        verbose_name = _('State')
+        verbose_name_plural = _('States')
+
+    def __str__(self):
+        """Вернуть название федеральной земли и её код."""
+        return f"{_("State")}: {self.name} ({self.code})"
+
+
+class City(models.Model):
+    """Муниципалитет Германии с кодом AGS и ссылкой на федеральную землю."""
+
+    ags = models.CharField(max_length=8, unique=True
+                           , validators=[ags_validator]
+                           , verbose_name=_("Official municipality code"))
+    name = models.CharField(max_length=150, verbose_name=_("City"))
+    state = models.ForeignKey(State, on_delete=models.PROTECT
+                              , related_name="cities"
+                              , verbose_name=_("Federal state"))
+
+    class Meta:
+        """Настройки таблицы и алфавитной сортировки муниципалитетов."""
+
+        db_table = 'cities'
+        ordering = ['name']
+        verbose_name = _('City')
+        verbose_name_plural = _('Cities')
+
+    def __str__(self):
+        """Вернуть название муниципалитета и его код AGS."""
+        return f"{_('City')}: {self.name} ({self.ags})"
+
+
+
+class CityDistrict(models.Model):
+    """Именованная часть муниципалитета с идентификатором из источника."""
+
+    city = models.ForeignKey(
+        City,
+        on_delete=models.CASCADE,
+        related_name="districts",
+        verbose_name=_("City")
+    )
+    code = models.CharField(max_length=32, verbose_name=_("CityDistrict code"))
+    name = models.CharField(max_length=150, verbose_name=_("CityDistrict name") )
+
+    class Meta:
+        """Настройки сортировки и уникальности кода района в пределах города."""
+
+        db_table = 'city_districts'
+        ordering = ["name", "pk"]
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=["city", "code"],
+        #         name="city_district_unique_code",
+        #     ),
+        # ]
+
+    def __str__(self):
+        """Вернуть название района."""
+        return f'{_('District name')}: {self.name}'
+
+
 class Types(models.TextChoices):
     """Допустимые типы объектов недвижимости."""
 
@@ -46,7 +122,12 @@ class Property(UUIDModel, TimeStampModel):
     deleted_at = models.DateTimeField(null=True, blank=True)
     property_type = models.CharField(max_length=15, choices=Types, verbose_name=_("Type"))
 
-    # files = models.ManyToManyField(PropertyFile, related_name="properties", blank=True, verbose_name=_("Files"))
+    city = models.ForeignKey(City, on_delete=models.PROTECT, null=True, blank=True
+                             , related_name="properties"
+                             , verbose_name=_("City"))
+    street = models.CharField(max_length=100, verbose_name=_("Street"), blank=True)
+    house = models.CharField(max_length=15, verbose_name=_("House"), blank=True)
+    plz = models.CharField(max_length=5, blank=True, validators=[validate_plz], verbose_name=_("PLZ"))
 
     class Meta:
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
@@ -77,6 +158,7 @@ class Property(UUIDModel, TimeStampModel):
                                      , name='property_deleted_at')]
 
     def soft_delete(self):
+        """Деактивировать объявление и сохранить время его мягкого удаления."""
         with transaction.atomic():
             now = timezone.now()
 
@@ -90,7 +172,7 @@ class Property(UUIDModel, TimeStampModel):
 
     def __str__(self):
         """Вернуть заголовок объявления вместе с его идентификатором."""
-        return f"{self.title} ({self.pk})"
+        return f"Property: '{self.title}', ({self.pk})"
 
 
 class PropertyFile(UUIDModel, TimeStampModel):
@@ -115,103 +197,4 @@ class PropertyFile(UUIDModel, TimeStampModel):
 
     def __str__(self):
         """Вернуть название вложения."""
-        return f"{self.title}"
-
-
-class State(models.Model):
-    """Федеральная земля Германии с двухзначным кодом."""
-
-    name = models.CharField(max_length=80, unique=True, verbose_name=_("Federal state"))
-    code = models.CharField(max_length=2
-                            , primary_key=True
-                            , validators=[state_code_validator]
-                            , verbose_name=_("Federal state code"))
-
-    class Meta:
-        """Настройки таблицы и алфавитной сортировки земель."""
-
-        db_table = 'states'
-        ordering = ['name']
-        verbose_name = _('State')
-        verbose_name_plural = _('States')
-
-    def __str__(self):
-        """Вернуть название федеральной земли и её код."""
-        return f"{self.name} ({self.code})"
-
-
-class City(models.Model):
-    """Муниципалитет Германии с кодом AGS и ссылкой на федеральную землю."""
-
-    ags = models.CharField(max_length=8, unique=True
-                           , validators=[ags_validator]
-                           , verbose_name=_("Official municipality code"))
-    name = models.CharField(max_length=150, verbose_name=_("City"))
-    state = models.ForeignKey(State, on_delete=models.PROTECT
-                              , related_name="cities"
-                              , verbose_name=_("Federal state"))
-
-    class Meta:
-        """Настройки таблицы и алфавитной сортировки муниципалитетов."""
-
-        db_table = 'cities'
-        ordering = ['name']
-        verbose_name = _('City')
-        verbose_name_plural = _('Cities')
-
-    def __str__(self):
-        """Вернуть название муниципалитета и его код AGS."""
-        return f"{self.name} ({self.ags})"
-
-
-class CityDistrict(models.Model):
-    """Именованная часть муниципалитета с идентификатором из источника."""
-
-    city = models.ForeignKey(
-        City,
-        on_delete=models.CASCADE,
-        related_name="districts",
-        verbose_name=_("City")
-    )
-    code = models.CharField(max_length=32, verbose_name=_("CityDistrict code"))
-    name = models.CharField(max_length=150, verbose_name=_("CityDistrict name") )
-
-    class Meta:
-        """Настройки сортировки и уникальности кода района в пределах города."""
-
-        db_table = 'city_districts'
-        ordering = ["name", "pk"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["city", "code"],
-                name="city_district_unique_code",
-            ),
-        ]
-
-    def __str__(self):
-        """Вернуть название района."""
-        return self.name
-
-
-class Address(models.Model):
-    """Адрес объявления с муниципалитетом, улицей, домом и индексом."""
-
-    property = models.OneToOneField(Property
-                                    , on_delete=models.CASCADE
-                                    , related_name="address")
-    # state = models.CharField(max_length=80, choices=States, verbose_name=_("State"))
-    city = models.ForeignKey(City, on_delete=models.PROTECT
-                             , related_name="addresses"
-                             , verbose_name=_("City"))
-    street = models.CharField(max_length=100, verbose_name=_("Street"))
-    house = models.CharField(max_length=15, verbose_name=_("House"))
-    plz = models.CharField(max_length=5, blank=True, validators=[validate_plz], verbose_name=_("PLZ"))
-
-    class Meta:
-        """Настройки таблицы адресов и названий для интерфейса."""
-
-        db_table = 'addresses'
-        verbose_name = _('Address')
-        verbose_name_plural = _('Addresses')
-        ordering = ['city', 'street', 'pk']
-
+        return f"PropertyFile: {self.title}"
