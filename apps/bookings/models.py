@@ -1,6 +1,7 @@
 """Модель бронирования и допустимые статусы заявки."""
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MaxLengthValidator
 
 from apps.base.models import TimeStampModel, UUIDModel
 from django.conf import settings
@@ -38,7 +39,7 @@ class Booking(UUIDModel, TimeStampModel):
     total_price = models.DecimalField(max_digits=10, decimal_places=2
                                       , verbose_name=_('Total Price'))
     status = models.CharField(max_length=15, choices=Status, default='pending', verbose_name=_('Status'))
-    description = models.TextField(blank=True, verbose_name=_("Description"))
+    description = models.TextField(blank=True, validators=[MaxLengthValidator(5000)], verbose_name=_("Description"))
 
     class Meta:
         """Порядок выдачи, ограничение дат и индекс для поиска бронирований."""
@@ -52,13 +53,11 @@ class Booking(UUIDModel, TimeStampModel):
             , models.CheckConstraint(condition=models.Q(status__in=Status.values)
                                      , name='booking_status_in')
                                       ]
-        indexes = [models.Index(fields=["property", "status", 'start_date']
-                                , name="booking_prop_status_start_idx")]
-        """Эта запись создаёт один составной индекс по трём полям в указанном порядке: property, status, start_date. 
-        booking_prop_status_start_idx — имя этого индекса в базе данных.
-Представьте список броней, сгруппированный сначала по объявлению, затем по статусу, 
-а внутри каждой группы отсортированный по дате заезда. При проверке пересечения MySQL 
-может использовать индекс, чтобы:
-1. Найти брони нужного объявления по property_id.
-2. Взять из них группу со статусом confirmed.
-3. Просмотреть в этой группе даты заезда раньше booking.end_date."""
+        indexes = [models.Index(
+            fields=["property", "status", 'start_date']
+            , name="booking_prop_status_start_idx")
+                    , models.Index(
+            fields=['user', '-created_at'],  # помогает находить бронирования конкретного пользователя
+            name='booking_user_created_idx', # и упорядочивать их по времени создания.
+)]
+

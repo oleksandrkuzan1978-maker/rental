@@ -3,15 +3,16 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import PermissionsMixin
-from .managers import UserManager
+from apps.users.utils.managers import UserManager
 from apps.base.models import TimeStampModel, UUIDModel
+from .utils.validators import phone_validator
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel):
     """Аккаунт с входом по email, контактными данными и правами Django."""
     name = models.CharField(_("name"), max_length=40)
     email = models.EmailField(_("email address"), max_length=150, unique=True)
-    phone = models.CharField(max_length=75, null=True, blank=True)
+    phone = models.CharField(max_length=21, blank=True, validators=[phone_validator])
     is_active = models.BooleanField(default=True) # Определяет, считается ли учётная запись пользователя активной.
     is_staff = models.BooleanField(default=False) # доступ к административной панели Django
     #is_superuser = models.BooleanField(default=False) # Определяет, обладает ли пользователь всеми разрешениями Django.

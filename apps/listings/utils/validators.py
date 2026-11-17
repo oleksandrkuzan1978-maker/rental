@@ -26,11 +26,11 @@ ags_validator = RegexValidator(
 # Максимальный размер файла — 2 МиБ
 def validate_file_size(file):
     """Вызвать ValidationError для файла размером больше 2 МиБ."""
-    max_size = 2 * 1024 * 1024
+    max_size = 5 * 1024 * 1024
 
     if file.size > max_size:
         raise ValidationError(
-            _("File size must not exceed 2 MB.")
+            _("File size must not exceed 5 MB.")
         )
 
 
@@ -38,7 +38,7 @@ def validate_plz(value):
     """Проверить, что почтовый индекс состоит ровно из пяти цифр."""
     if not re.fullmatch(r"[0-9]{5}", value):
         raise ValidationError(
-            "PLZ muss aus genau 5 Ziffern bestehen."
+            _("PLZ must contain exactly 5 digits.")
         )
 
 

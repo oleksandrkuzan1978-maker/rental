@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 from django.utils import timezone
-from .models import User
+from apps.users.models import User
 
 def soft_delete_user(*, user_id):
     """Деактивировать аккаунт user_id и записать дату мягкого удаления.

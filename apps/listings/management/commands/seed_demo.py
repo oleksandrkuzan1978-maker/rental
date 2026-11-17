@@ -16,8 +16,8 @@ from django.utils import timezone
 
 from apps.analytics.models import PropertyView, SearchHistory
 from apps.bookings.models import Booking
-from apps.bookings.services import confirm_booking, create_booking
-from apps.listings.models import City, Property, PropertyFile, Types
+from apps.bookings.utils.services import confirm_booking, create_booking
+from apps.listings.models import City, Property, PropertyFile, Types, PropertyStatus
 from apps.reviews.services import create_review
 from apps.users.models import User
 
@@ -83,6 +83,7 @@ class Command(BaseCommand):
             user=landlord,
             title="Demo: Apartment in Berlin",
             description="Fictional listing for testing the rental project.",
+            status=PropertyStatus.PUBLISHED,
             property_type=Types.APARTMENT,
             price_per_night=Decimal("79.90"),
             rooms=2,
@@ -95,6 +96,7 @@ class Command(BaseCommand):
             user=landlord,
             title="Demo: Studio in Dortmund",
             description="Fictional listing for testing the rental project.",
+            status=PropertyStatus.PUBLISHED,
             property_type=Types.STUDIO,
             price_per_night=Decimal("59.00"),
             rooms=1,
@@ -105,15 +107,19 @@ class Command(BaseCommand):
         )
 
         today = timezone.localdate()
-        past = create_booking(
+        start_date = today - timedelta(days=14)
+        end_date = today - timedelta(days=10)
+
+        past = Booking(
             user=tenant,
-            property_id=berlin.pk,
-            start_date=today - timedelta(days=14),
-            end_date=today - timedelta(days=10),
+            property=berlin,
+            start_date=start_date,
+            end_date=end_date,
+            total_price=berlin.price_per_night * (end_date - start_date).days,
+            status=Booking.Status.COMPLETED,
         )
-        past = confirm_booking(property_id=berlin.pk, booking_id=past.pk)
-        past.status = Booking.Status.COMPLETED
-        past.save(update_fields=["status", "updated_at"])
+        past.full_clean()
+        past.save(force_insert=True)
         create_review(user=tenant, booking_id=past.pk, rating=5, comment="Demo review.")
 
         upcoming = create_booking(

@@ -13,10 +13,10 @@ from .models import PropertyView, SearchHistory
 class PropertyViewAdmin(admin.ModelAdmin):
     """Настройки поиска и фильтрации просмотров в админке."""
 
-    list_display = ('id', 'created_at')
+    list_display = ('id', 'property', 'created_at')
     list_select_related = ('property',)
     search_fields = ("property__id",)
-    list_filter = ('property_id',)
+    list_filter = ('property',)
     ordering = ('-created_at',)
 
 
@@ -24,10 +24,10 @@ class PropertyViewAdmin(admin.ModelAdmin):
 class SearchHistoryAdmin(admin.ModelAdmin):
     """Настройки просмотра истории поиска в админке."""
 
-    list_display = ('id', 'query', 'created_at')
+    list_display = ('id', 'user', 'query', 'created_at')
     list_select_related = ('user',)
     search_fields = ('user__email', "query")
-    list_filter = ('user__email',)
+    list_filter = ('user',)
     ordering = ('-created_at',)
 
 

@@ -3,7 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
-from .models import Property, PropertyFile
+from apps.listings.models import Property, PropertyFile
 
 
 MAX_FILES_PER_PROPERTY = 7

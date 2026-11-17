@@ -13,9 +13,9 @@ from django.utils import timezone
 class BookingAdmin(admin.ModelAdmin):
     """Показывает даты, стоимость и статус бронирования в админке."""
 
-    list_display = ('id', 'start_date', 'end_date', 'total_price', 'status')
-    readonly_fields = ('id', 'start_date', 'end_date', 'total_price', 'status', 'property', 'user',)
+    list_display = ('id', 'user', 'property', 'start_date', 'end_date', 'total_price', 'status')
+    readonly_fields = ('id', 'user', 'property', 'start_date', "status", 'end_date', 'total_price', 'description',)
     list_select_related = ('user', 'property')
-    search_fields = ('user__email', "property__title", "created_at")
-    list_filter = ("start_date", 'end_date')
+    search_fields = ('user__email', "property__title")
+    list_filter = ("start_date", 'end_date', 'status')
     ordering = ('-created_at',)

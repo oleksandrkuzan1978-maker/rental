@@ -18,7 +18,7 @@ class TimeStampModel(models.Model):
     """Абстрактная модель с датами создания и последнего обновления."""
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True) # Это поле хранит дату последнего изменения записи пользователя.
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         """Настройки абстрактной модели двух временных меток."""

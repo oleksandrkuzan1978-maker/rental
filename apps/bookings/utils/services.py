@@ -1,8 +1,8 @@
 """Создание и подтверждение заявок на бронирование."""
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from apps.listings.models import  Property
-from .models import Booking
+from apps.listings.models import  Property, PropertyStatus
+from apps.bookings.models import Booking
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
@@ -52,7 +52,7 @@ def _add_one_year(day):
 
 @transaction.atomic # На MySQL/InnoDB транзакция удержит блокировку объявления до сохранения брони,
 # поэтому параллельное отключение объявления не сможет вклиниться между проверкой и записью.
-def create_booking(*, user, property_id, start_date, end_date):
+def create_booking(*, user, property_id, start_date, end_date, description=""):
     """Создать ожидающую заявку и вернуть её с рассчитанной стоимостью.
 
     Передайте арендатора user, идентификатор объявления property_id,
@@ -80,7 +80,10 @@ def create_booking(*, user, property_id, start_date, end_date):
     #     })
 
     try:
-        listing = Property.objects.select_for_update().get(pk=property_id, is_active=True)
+        listing = Property.objects.select_for_update().get(pk=property_id
+                                                           , status=PropertyStatus.PUBLISHED
+                                                           , deleted_at__isnull=True
+                                                           , price_per_night__isnull=False)
     # Запрет новых заявок на неактивное объявление
     except Property.DoesNotExist:
         raise ValidationError(_("This listing is not available for booking.")
@@ -93,6 +96,7 @@ def create_booking(*, user, property_id, start_date, end_date):
         start_date=start_date,
         end_date=end_date,
         total_price=listing.price_per_night * nights,
+        description=description,
     )
     # Проверяем порядок дат и допустимую точность суммы перед вставкой.
     booking.full_clean()

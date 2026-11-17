@@ -21,27 +21,27 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ('booking__user__email', "booking__property__title", "rating")
     list_filter = ("rating", "booking__status",)
     ordering = ('-rating',)
-# Ниже идущие методы убрать, так как зачем нам создавать или менять отзывы через админку.
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Настроить выбор бронирования, ограничив его бронями текущего пользователя с заданным статусом."""
-        if db_field.name == "booking":
-            kwargs["queryset"] = Booking.objects.filter(user_id=request.user.pk
-                                                        , status=Booking.Status.COMPLETED)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def has_change_permission(self, request, obj: Review | None = None) -> bool:
-        """Проверить право Django на изменение отзыва и принадлежность его брони пользователю."""
-        if not super().has_change_permission(request, obj):
-            return False
-
-        if obj is None:
-            return True
-
-        return is_booking_tenant(user=request.user, booking=obj.booking)
-
-    def get_readonly_fields(self, request, obj=None):
-        """Вернуть поля только для чтения, включая бронь существующего отзыва."""
-        readonly_fields = super().get_readonly_fields(request, obj)
-        if obj is not None:
-            return *readonly_fields, "booking"
-        return readonly_fields
+# Нижеследующие методы убрать, так как зачем нам создавать или менять отзывы через админку.
+#     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#         """Настроить выбор бронирования, ограничив его бронями текущего пользователя с заданным статусом."""
+#         if db_field.name == "booking":
+#             kwargs["queryset"] = Booking.objects.filter(user_id=request.user.pk
+#                                                         , status=Booking.Status.COMPLETED)
+#         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+#
+#     def has_change_permission(self, request, obj: Review | None = None) -> bool:
+#         """Проверить право Django на изменение отзыва и принадлежность его брони пользователю."""
+#         if not super().has_change_permission(request, obj):
+#             return False
+#
+#         if obj is None:
+#             return True
+#
+#         return is_booking_tenant(user=request.user, booking=obj.booking)
+#
+#     def get_readonly_fields(self, request, obj=None):
+#         """Вернуть поля только для чтения, включая бронь существующего отзыва."""
+#         readonly_fields = super().get_readonly_fields(request, obj)
+#         if obj is not None:
+#             return *readonly_fields, "booking"
+#         return readonly_fields

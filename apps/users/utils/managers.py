@@ -1,6 +1,7 @@
 """Менеджер создания пользователей и администраторов с входом по email."""
 
 from django.contrib.auth.base_user import BaseUserManager
+from django.utils.translation import gettext_lazy as _
 
 class UserManager(BaseUserManager):
     """Создание пользователей с нормализацией email и хешированием пароля."""
@@ -13,13 +14,13 @@ class UserManager(BaseUserManager):
         любого из этих значений вызвать ValueError.
         """
         if not email:
-            raise ValueError('Users must have an email address')
+            raise ValueError(_('Users must have an email address'))
         if not password:
-            raise ValueError("Users must have a password")
+            raise ValueError(_("Users must have a password"))
 
         field = "name"
         if not extra_fields.get(field):
-            raise ValueError(f'Field {field} is required')
+            raise ValueError(_(f'Field {field} is required'))
 
         email = self.normalize_email(email) # Приводим доменную часть email к нижнему регистру:
         user = self.model(email=email, **extra_fields) # Создаёт объект модели User в памяти.
