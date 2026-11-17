@@ -110,6 +110,8 @@ class Types(models.TextChoices):
 
 
 class PropertyStatus(models.TextChoices):
+    """Допустимые статусы объявления: черновик, опубликовано и приостановлено."""
+
     DRAFT = "draft", "Draft" # режим черновика
     PUBLISHED = "published", "Published" # Объявление активно
     PAUSED = "paused", "Paused" # Объявление НЕ активно (is_active=False)
@@ -126,7 +128,7 @@ class Property(UUIDModel, TimeStampModel):
     price_per_night = models.DecimalField(max_digits=10
                                           , decimal_places=2
                                           , blank=True, null=True
-                                          , validators=[MinValueValidator(0.01)]
+                                          , validators=[MinValueValidator(0)]
                                           , verbose_name=_("Price per night"))
     rooms = models.DecimalField(max_digits=4, decimal_places=1
                                 , null=True, blank=True
@@ -175,7 +177,7 @@ class Property(UUIDModel, TimeStampModel):
             models.CheckConstraint(
                 condition=(
                         models.Q(price_per_night__isnull=True)
-                        | models.Q(price_per_night__gt=0)
+                        | models.Q(price_per_night__gte=0)
                 ),
                 name="property_price_positive_or_null",
             ),
@@ -196,6 +198,8 @@ class Property(UUIDModel, TimeStampModel):
 ]
 
     def clean(self):
+        """Проверить, что выбранный район относится к указанному городу."""
+
         super().clean()
 
         if self.city_district_id is None:

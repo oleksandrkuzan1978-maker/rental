@@ -6,17 +6,25 @@ from apps.reviews.models import Review
 
 
 class ReviewListSerializer(serializers.ModelSerializer):
+    """Заготовка сериализатора для списка отзывов."""
+
     pass
 
 
 class ReviewCreateSerializer(serializers.ModelSerializer):
 
+    """Принять данные отзыва и проверить право автора оставить его."""
+
     class Meta:
+        """Указать поля для создания отзыва и защитить его идентификатор от записи."""
+
         model = Review
         fields = ['id', 'booking', 'rating', 'comment']
         read_only_fields = ['id']
 
     def validate(self, attrs):
+        """Проверить, что бронь принадлежит автору, завершена и дата выезда прошла."""
+
         booking = attrs['booking']
         user = self.context['request'].user
 
@@ -40,7 +48,11 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
 class ReviewUpdateSerializer(serializers.ModelSerializer):
 
+    """Принять новую оценку и текст существующего отзыва."""
+
     class Meta:
+        """Разрешить обновление оценки и текста отзыва."""
+
         model = Review
         fields = ['rating', 'comment']
     # Если переопределить метод get_queryset во вьюшке как показано ниже или создать пермишн, то этот валидейт можно убрать
