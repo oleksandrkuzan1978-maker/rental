@@ -212,11 +212,13 @@ class Property(UUIDModel, TimeStampModel):
 
         if self.status == PropertyStatus.PUBLISHED:
             if self.city_id is None:
-                errors["city"] = _("Specify the city for posting the ad.")
+                errors["city"] = _("Specify the city before publishing the listing.")
             if not self.street.strip():
-                errors["street"] = _("Specify the street for posting the ad.")
+                errors["street"] = _("Specify the street before publishing the listing.")
             if not self.house.strip():
-                errors["house"] = _("Specify the house for posting the ad.")
+                errors["house"] = _("Specify the house before publishing the listing.")
+            if self.price_per_night is None:
+                errors["price_per_night"] = _("Specify the price before publishing the listing.")
 
         if errors:
             raise ValidationError(errors)
