@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth import get_user_model
@@ -58,6 +59,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise
     # def create(self, validated_data):
     #     return User.objects.create_user(**validated_data)
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    """Сериализатор логирования пользователя."""
+    def validate(self, attrs):
+        attrs["email"] = attrs["email"].strip().lower()
+        return super().validate(attrs)
 
 
 class UserSerializer(serializers.ModelSerializer):

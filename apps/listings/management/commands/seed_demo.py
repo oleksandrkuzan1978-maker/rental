@@ -65,19 +65,16 @@ class Command(BaseCommand):
         if len(cities) != 2:
             raise CommandError("Import the cities first. Berlin and Dortmund are required.")
 
-        landlord_group, _ = Group.objects.get_or_create(name="Landlord")
-        tenant_group, _ = Group.objects.get_or_create(name="Tenant")
         Group.objects.get_or_create(name="Staff")
 
         # Use random passwords. Set a known password with manage.py changepassword.
         landlord = User.objects.create_user(
             email=LANDLORD_EMAIL, name="Demo landlord", password=token_urlsafe(24)
         )
-        landlord.groups.add(landlord_group)
+
         tenant = User.objects.create_user(
             email=TENANT_EMAIL, name="Demo tenant", password=token_urlsafe(24)
         )
-        tenant.groups.add(tenant_group)
 
         berlin = Property.objects.create(
             user=landlord,
