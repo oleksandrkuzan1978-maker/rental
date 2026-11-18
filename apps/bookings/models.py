@@ -1,4 +1,5 @@
 """Модель бронирования и допустимые статусы заявки."""
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator
@@ -60,4 +61,3 @@ class Booking(UUIDModel, TimeStampModel):
             fields=['user', '-created_at'],  # помогает находить бронирования конкретного пользователя
             name='booking_user_created_idx', # и упорядочивать их по времени создания.
 )]
-

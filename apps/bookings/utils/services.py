@@ -74,11 +74,6 @@ def create_booking(*, user, property_id, start_date, end_date, description=""):
     # День выезда не входит в число оплачиваемых ночей.
     nights = (end_date - start_date).days
 
-    # if nights <= 0:
-    #     raise ValidationError({
-    #         "end_date": "Дата выезда должна быть позже даты заезда.",
-    #     })
-
     try:
         listing = Property.objects.select_for_update().get(pk=property_id
                                                            , status=PropertyStatus.PUBLISHED
@@ -98,7 +93,8 @@ def create_booking(*, user, property_id, start_date, end_date, description=""):
         total_price=listing.price_per_night * nights,
         description=description,
     )
-    # Проверяем порядок дат и допустимую точность суммы перед вставкой.
+    # full_clean выполняет проверки модели.
     booking.full_clean()
-    booking.save(force_insert=True)
+    booking.save(force_insert=True) # force_insert=True явно фиксирует нужное поведение.
+    # Если запись с таким первичным ключом уже существует, база вернёт ошибку
     return booking

@@ -33,7 +33,7 @@ class PropertyFileAdmin(admin.ModelAdmin):
 class CityAdmin(admin.ModelAdmin):
     """Настройки поиска городов и фильтрации по федеральной земле."""
 
-    list_display = ("name", 'ags', 'state')
+    list_display = ("id", "name", 'ags', 'state')
     list_select_related = ("state",)
     search_fields = ("name", 'state__name')
     list_filter = ("state",)

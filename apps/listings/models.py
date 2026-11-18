@@ -16,8 +16,6 @@ from django.db import transaction
 from apps.base.models import TimeStampModel, UUIDModel
 from django.conf import settings
 
-# Create your models here.
-
 
 class State(models.Model):
     """Федеральная земля Германии с двухзначным кодом."""
