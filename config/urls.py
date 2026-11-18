@@ -9,4 +9,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/v1/auth/', include('apps.rental_auth.urls')),
+    path('api/v1/users/', include('apps.users.urls')),
 ]

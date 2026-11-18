@@ -1,5 +1,4 @@
 """Объявления о недвижимости, вложения, адреса и справочники Германии."""
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator
@@ -152,8 +151,8 @@ class Property(UUIDModel, TimeStampModel):
         blank=True,
         related_name="properties",
     )
-    street = models.CharField(max_length=100, verbose_name=_("Street"), blank=True)
-    house = models.CharField(max_length=15, verbose_name=_("House"), blank=True)
+    street = models.CharField(max_length=100, blank=True, verbose_name=_("Street"))
+    house = models.CharField(max_length=15, blank=True, verbose_name=_("House"))
     plz = models.CharField(max_length=5, blank=True, validators=[validate_plz], verbose_name=_("PLZ"))
 
     class Meta:
@@ -198,20 +197,30 @@ class Property(UUIDModel, TimeStampModel):
 ]
 
     def clean(self):
-        """Проверить, что выбранный район относится к указанному городу."""
-
+        """Проверить, что выбранный район относится к указанному городу
+        и проверить готовность объявления к публикации."""
         super().clean()
+        errors = {}
 
-        if self.city_district_id is None:
-            return
-
-        if not CityDistrict.objects.filter(
+        if self.city_district_id is not None:
+            district_matches = CityDistrict.objects.filter(
                 pk=self.city_district_id,
                 city_id=self.city_id,
-        ).exists():
-            raise ValidationError({
-                "city_district": _("Select the district that belongs to the specified city."),
-            })
+            ).exists()
+            if not district_matches:
+                errors["city_district"] = _( "Select the district that belongs to the specified city.")
+
+        if self.status == PropertyStatus.PUBLISHED:
+            if self.city_id is None:
+                errors["city"] = _("Specify the city for posting the ad.")
+            if not self.street.strip():
+                errors["street"] = _("Specify the street for posting the ad.")
+            if not self.house.strip():
+                errors["house"] = _("Specify the house for posting the ad.")
+
+        if errors:
+            raise ValidationError(errors)
+
 
     def soft_delete(self):
         """Деактивировать объявление и сохранить время его мягкого удаления."""
