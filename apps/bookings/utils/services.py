@@ -47,6 +47,7 @@ def  confirm_booking(*, property_id, booking_id):
         booking.save(update_fields=['status', "updated_at"])
         return booking
 
+
 def _add_one_year(day):
     """Вернуть ту же дату через год, заменяя 29 февраля на 28 февраля."""
     if day.month == 2 and day.day == 29:
@@ -54,9 +55,11 @@ def _add_one_year(day):
 
     return day.replace(year=day.year + 1)
 
+
 @transaction.atomic # На MySQL/InnoDB транзакция удержит блокировку объявления до сохранения брони,
 # поэтому параллельное отключение объявления не сможет вклиниться между проверкой и записью.
-def create_booking(*, user, property_id, start_date, end_date, description=""):
+def create_booking(*, user, property_id, start_date, end_date,
+                   description="", show_phone=True, show_email=True):
     """Создать ожидающую заявку и вернуть её с рассчитанной стоимостью.
 
     Передайте арендатора user, идентификатор объявления property_id,
@@ -113,6 +116,8 @@ def create_booking(*, user, property_id, start_date, end_date, description=""):
         end_date=end_date,
         total_price=listing.price_per_night * nights,
         description=description,
+        show_phone=show_phone,
+        show_email=show_email,
     )
     # full_clean выполняет проверки модели.
     booking.full_clean()

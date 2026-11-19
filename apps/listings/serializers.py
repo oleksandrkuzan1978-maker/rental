@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import Property, PropertyFile, State, City
+from apps.base.serializers import ContactModelSerializer
 
 
 class PropertyFileSerializer(serializers.ModelSerializer):
@@ -13,9 +14,8 @@ class PropertyFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'file']
 
 
-class PropertySerializer(serializers.ModelSerializer):
+class PropertySerializer(ContactModelSerializer):
     """Сериализатор объявлений со списком прикреплённых файлов."""
-
     files = PropertyFileSerializer(many=True, read_only=True)
 
     class Meta:
@@ -24,7 +24,10 @@ class PropertySerializer(serializers.ModelSerializer):
         model = Property
         fields = ["id", "user", "title", "description", "property_type",
                   "price_per_night", "rooms", "city", "city_district", "street",
-                "house", "plz", "status", "files",]
+                "house", "plz", "status", "files",
+                  "show_phone", "show_email",
+                  "contact_phone", "contact_email",
+                  ]
         read_only_fields = ["id", "user"]
 
     def create(self, validated_data):

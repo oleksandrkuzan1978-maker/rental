@@ -1,11 +1,12 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from apps.base.serializers import ContactModelSerializer
 from .models import Booking
 from .utils.services import create_booking
 
 
-class BookingSerializer(serializers.ModelSerializer):
+class BookingSerializer(ContactModelSerializer):
     """Создание и представление бронирования."""
     # Статус бронирования остаётся только для чтения
     # — подтверждение, отмена и завершение заявки требуют собственных правил доступа.
@@ -14,6 +15,8 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = [
             "id", "user", "property", "start_date",
             "end_date", "description", "total_price", "status",
+            "show_phone", "show_email",
+            "contact_phone", "contact_email",
         ]
         read_only_fields = ["id", "user", "total_price", "status",] # поля включаются в ответ,
                                                                 # Но переданные клиентом значения
@@ -31,3 +34,11 @@ class BookingSerializer(serializers.ModelSerializer):
                 else {"non_field_errors": error.messages}
             )
             raise serializers.ValidationError(detail) from error
+
+class BookingUpdateSerializer(ContactModelSerializer):
+    """Редактирование описания и настроек контактов бронирования."""
+    class Meta:
+        model = Booking
+        fields = [
+            "id", "user", "property", "start_date",
+        ]

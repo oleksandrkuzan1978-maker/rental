@@ -153,6 +153,9 @@ class Property(UUIDModel, TimeStampModel):
     house = models.CharField(max_length=15, blank=True, verbose_name=_("House"))
     plz = models.CharField(max_length=5, blank=True, validators=[validate_plz], verbose_name=_("PLZ"))
 
+    show_phone = models.BooleanField(default=True) # Флаги показа контактов в моделях
+    show_email = models.BooleanField(default=True)
+
     class Meta:
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
 

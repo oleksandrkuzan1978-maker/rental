@@ -42,6 +42,9 @@ class Booking(UUIDModel, TimeStampModel):
     status = models.CharField(max_length=15, choices=Status, default='pending', verbose_name=_('Status'))
     description = models.TextField(blank=True, validators=[MaxLengthValidator(5000)], verbose_name=_("Description"))
 
+    show_phone = models.BooleanField(default=True)  # Флаги показа контактов в моделях
+    show_email = models.BooleanField(default=True)
+
     class Meta:
         """Порядок выдачи, ограничение дат и индекс для поиска бронирований."""
 
