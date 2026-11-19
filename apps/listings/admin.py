@@ -1,7 +1,11 @@
 """Администрирование объявлений, вложений, адресов и городов."""
 from django.contrib import admin
-from .models import  Property, PropertyFile, City
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect
 
+from .models import  Property, PropertyFile, City
+from .utils.services import save_property_file
 
 # Register your models here.
 @admin.register(Property)
@@ -21,12 +25,45 @@ class PropertyAdmin(admin.ModelAdmin):
 
 @admin.register(PropertyFile)
 class PropertyFileAdmin(admin.ModelAdmin):
-    """Настройки административного списка вложений."""
+    """Управление вложениями с проверкой лимита файлов объявления."""
 
-    list_display = ('title', 'property', 'file')
-    list_select_related = ('property',)
-    search_fields = ('title', 'property__title')
-    ordering = ('title', '-created_at')
+    list_display = ("id", "title", "property", "file")
+    list_select_related = ("property",)
+    search_fields = ("title", "property__title")
+    ordering = ("title", "-created_at")
+
+    def get_readonly_fields(self, request, obj=None):
+        """Закрепить существующее вложение за его объявлением."""
+        if obj is not None:
+            return ("property",)
+        return ()
+
+    def save_model(self, request, obj, form, change):
+        """Сохранить вложение через общий сервис."""
+        save_property_file(attachment=obj)
+
+    def changeform_view(
+        self,
+        request,
+        object_id=None,
+        form_url="",
+        extra_context=None,
+    ):
+        """Показать сообщение, если сервис отклонил сохранение."""
+        try:
+            return super().changeform_view(
+                request,
+                object_id=object_id,
+                form_url=form_url,
+                extra_context=extra_context,
+            )
+        except ValidationError as error:
+            self.message_user(
+                request,
+                " ".join(error.messages),
+                level=messages.ERROR,
+            )
+            return redirect(request.path)
 
 
 @admin.register(City)

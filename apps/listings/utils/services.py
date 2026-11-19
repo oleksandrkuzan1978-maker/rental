@@ -10,27 +10,32 @@ MAX_FILES_PER_PROPERTY = 7
 
 
 @transaction.atomic
-def add_property_file(*, property_id, title, uploaded_file):
-    """Добавить файл к объявлению и вернуть созданное вложение.
+def save_property_file(*, attachment):
+    """Проверить лимит, сохранить вложение и вернуть его."""
+    # Все загрузки к одному объявлению проходят проверку по очереди.
+    listing = Property.objects.select_for_update().get(
+        pk=attachment.property_id,
+    )
 
-    Передайте идентификатор объявления property_id, название title и
-    загруженный файл uploaded_file по имени. Запись создаётся в транзакции.
-    Лимит в семь файлов и недопустимые данные вызывают ValidationError.
-    Отсутствующее объявление вызывает Property.DoesNotExist.
-    """
-    listing = Property.objects.select_for_update().get(pk=property_id)
+    # При редактировании сам файл не занимает дополнительное место.
+    other_files = listing.files.exclude(pk=attachment.pk)
 
-    if listing.files.count() >= MAX_FILES_PER_PROPERTY:
+    if other_files.count() >= MAX_FILES_PER_PROPERTY:
         raise ValidationError(
             _("You can attach a maximum of 7 files to a single listing."),
             code="property_file_limit",
         )
 
-    attachment = PropertyFile(
-        property=listing,
-        title=title,
-        file=uploaded_file,
-    )
     attachment.full_clean()
     attachment.save()
     return attachment
+
+
+def add_property_file(*, property_id, title, uploaded_file):
+    """Создать вложение объявления с проверкой общего лимита файлов."""
+    attachment = PropertyFile(
+        property_id=property_id,
+        title=title,
+        file=uploaded_file,
+    )
+    return save_property_file(attachment=attachment)
