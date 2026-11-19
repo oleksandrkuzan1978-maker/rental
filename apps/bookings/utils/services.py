@@ -58,8 +58,9 @@ def _add_one_year(day):
 
 @transaction.atomic # На MySQL/InnoDB транзакция удержит блокировку объявления до сохранения брони,
 # поэтому параллельное отключение объявления не сможет вклиниться между проверкой и записью.
-def create_booking(*, user, property_id, start_date, end_date,
-                   description="", show_phone=True, show_email=True):
+def create_booking(*, user, property_id, start_date, end_date, description="",
+                   adults=1, children=0, has_pets=False,
+                   show_phone=True, show_email=True):
     """Создать ожидающую заявку и вернуть её с рассчитанной стоимостью.
 
     Передайте арендатора user, идентификатор объявления property_id,
@@ -116,6 +117,9 @@ def create_booking(*, user, property_id, start_date, end_date,
         end_date=end_date,
         total_price=listing.price_per_night * nights,
         description=description,
+        adults=adults,
+        children=children,
+        has_pets=has_pets,
         show_phone=show_phone,
         show_email=show_email,
     )

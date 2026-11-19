@@ -1,8 +1,8 @@
 """Модель бронирования и допустимые статусы заявки."""
-from django.core.exceptions import ValidationError
+import builtins
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, MinValueValidator
 
 from apps.base.models import TimeStampModel, UUIDModel
 from django.conf import settings
@@ -42,6 +42,10 @@ class Booking(UUIDModel, TimeStampModel):
     status = models.CharField(max_length=15, choices=Status, default='pending', verbose_name=_('Status'))
     description = models.TextField(blank=True, validators=[MaxLengthValidator(5000)], verbose_name=_("Description"))
 
+    adults = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_("Adults"),)
+    children = models.PositiveSmallIntegerField(default=0, verbose_name=_("Children"))
+    has_pets = models.BooleanField(default=False, verbose_name=_("Pets"))
+
     show_phone = models.BooleanField(default=True)  # Флаги показа контактов в моделях
     show_email = models.BooleanField(default=True)
 
@@ -63,4 +67,17 @@ class Booking(UUIDModel, TimeStampModel):
                     , models.Index(
             fields=['user', '-created_at'],  # помогает находить бронирования конкретного пользователя
             name='booking_user_created_idx', # и упорядочивать их по времени создания.
-)]
+            )]
+        # ограничение: кол-во людей не должно быть = 0
+        models.CheckConstraint(
+            condition=(
+                    models.Q(adults__gt=0)
+                    | models.Q(children__gt=0)
+            ),
+            name="booking_has_guests",
+        ),
+
+    @builtins.property
+    def guests_count(self):
+        """Общее количество проживающих."""
+        return self.adults + self.children

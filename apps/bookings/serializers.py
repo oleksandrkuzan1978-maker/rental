@@ -8,6 +8,8 @@ from .utils.services import create_booking
 
 class BookingSerializer(ContactModelSerializer):
     """Создание и представление бронирования."""
+    guests_count = serializers.IntegerField(read_only=True)
+
     # Статус бронирования остаётся только для чтения
     # — подтверждение, отмена и завершение заявки требуют собственных правил доступа.
     class Meta:
@@ -15,6 +17,10 @@ class BookingSerializer(ContactModelSerializer):
         fields = [
             "id", "user", "property", "start_date",
             "end_date", "description", "total_price", "status",
+            "adults",
+            "children",
+            "guests_count",
+            "has_pets",
             "show_phone", "show_email",
             "contact_phone", "contact_email",
         ]
