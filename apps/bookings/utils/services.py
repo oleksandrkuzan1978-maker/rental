@@ -30,10 +30,14 @@ def  confirm_booking(*, property_id, booking_id):
         # Блокирующее чтение проверяет актуальные подтверждённые брони.
         has_overlap = Booking.objects.select_for_update().filter(
             property_id=property_id,
-            status=Booking.Status.CONFIRMED,
-            # Строгие границы разрешают заезд в день выезда предыдущего гостя.
+            status__in=[
+                Booking.Status.PENDING,
+                Booking.Status.CONFIRMED,
+            ],
             start_date__lt=booking.end_date,
             end_date__gt=booking.start_date,
+        ).exclude(
+            pk=booking.pk,
         ).exists()
 
         if has_overlap:
@@ -84,6 +88,23 @@ def create_booking(*, user, property_id, start_date, end_date, description=""):
         raise ValidationError(_("This listing is not available for booking.")
                               , code="listing_unavailable" ) from None
 
+    # проверка наличия броней на пересечение по датам
+    has_overlap = Booking.objects.select_for_update().filter(
+        property=listing,
+        status__in=[
+            Booking.Status.PENDING,
+            Booking.Status.CONFIRMED,
+        ],
+        start_date__lt=end_date,
+        end_date__gt=start_date,
+    ).exists()
+
+    if has_overlap:
+        raise ValidationError(
+            _("The listing is already booked for the selected dates. "
+                "Please choose different dates."),
+            code="booking_overlap",
+        )
 
     booking = Booking(
         user=user,
