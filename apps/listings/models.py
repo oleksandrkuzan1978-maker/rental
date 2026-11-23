@@ -151,10 +151,19 @@ class Listing(UUIDModel, TimeStampModel):
     )
     street = models.CharField(max_length=100, blank=True, verbose_name=_("Street"))
     house = models.CharField(max_length=15, blank=True, verbose_name=_("House"))
+    apartment = models.CharField(max_length=15, blank=True, default="", verbose_name=_("Apartment"),)
     plz = models.CharField(max_length=5, blank=True, validators=[validate_plz], verbose_name=_("PLZ"))
 
     show_phone = models.BooleanField(default=True) # Флаги показа контактов в моделях
     show_email = models.BooleanField(default=True)
+
+    max_guests = models.PositiveIntegerField(null=True, blank=True
+                                             , validators=[MinValueValidator(1)]
+                                             , verbose_name=_("Maximum number of guests"))
+    pets_allowed = models.BooleanField(default=False, verbose_name=_("Pet allowed"))
+    instant_booking_enabled = models.BooleanField(default=True
+                                                  , verbose_name=_(
+                                                    "Instant booking enabled")) # флаг мгновенного бронирования
 
     class Meta:
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
@@ -188,13 +197,20 @@ class Listing(UUIDModel, TimeStampModel):
                 ),
                 name="property_rooms_positive_or_null",
             ),
-            models.CheckConstraint(condition=models.Q(property_type__in=Types.values),
-                                   name='property_type_valid')
+            models.CheckConstraint(condition=models.Q(property_type__in=Types.values)
+                                     , name='property_type_valid')
             , models.CheckConstraint(condition=(models.Q(deleted_at__isnull=True)
-                                                | ~models.Q(status=ListingStatus.PUBLISHED)),
-                                     name="listing_deleted_at_", )
+                                                | ~models.Q(status=ListingStatus.PUBLISHED))
+                                     , name="listing_deleted_at_", )
             , models.CheckConstraint(condition=models.Q(status__in=ListingStatus.values)
                                      , name='listing_status_in')
+            , models.CheckConstraint(condition=models.Q(max_guests__isnull=True)
+                                                | models.Q(max_guests__gte=1)
+                                     , name="listing_max_guests_positive")
+            , models.UniqueConstraint(fields=["city", "street", "house", "apartment", "plz"]
+                                      , name="unique_address"
+                                      , violation_error_message=_("An ad with this city, street, "
+                                                                  "house number, and postal code already exists."))
 ]
 
     def clean(self):
@@ -220,6 +236,8 @@ class Listing(UUIDModel, TimeStampModel):
                 errors["house"] = _("Specify the house before publishing the listing.")
             if self.price_per_night is None:
                 errors["price_per_night"] = _("Specify the price before publishing the listing.")
+            if self.max_guests is None:
+                errors["max_guests"] = _("Specify the maximum number of guests before publishing.")
 
         if errors:
             raise ValidationError(errors)

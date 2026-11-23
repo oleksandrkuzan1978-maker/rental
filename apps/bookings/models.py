@@ -7,18 +7,9 @@ from apps.base.models import TimeStampModel, UUIDModel
 from django.conf import settings
 
 from apps.listings.models import Listing
-
+from apps.bookings.utils.choices import Status, DecisionReason
+from apps.bookings.utils.variables import *
 # Create your models here.
-
-
-class Status(models.TextChoices):
-    """Допустимые статусы заявки на бронирование."""
-
-    PENDING = 'pending', _('Pending')
-    CONFIRMED = 'confirmed', _('Confirmed')
-    REJECTED = 'rejected', _('Rejected')
-    CANCELLED = 'cancelled', _('Cancelled')
-    COMPLETED = 'completed', _('Completed')
 
 
 class Booking(UUIDModel, TimeStampModel):
@@ -47,6 +38,22 @@ class Booking(UUIDModel, TimeStampModel):
 
     show_phone = models.BooleanField(default=True)  # Флаги показа контактов в моделях
     show_email = models.BooleanField(default=True)
+    # requires_owner_approval - есть ли у арендатора особые условия, требующие согласования.
+    requires_owner_approval = models.BooleanField(default=False
+                                                  , verbose_name=_("Special conditions require owner approval"))
+    # decision_reason — почему заявка была подтверждена или отклонена.
+    decision_reason = models.CharField(max_length=50,
+                                       choices=DecisionReason,
+                                       blank=True,
+                                       default='',
+                                       verbose_name=_("Decision Reason"),)
+    # decided_at — когда было принято решение о подтверждении или отклонении.
+    decided_at = models.DateTimeField(null=True, blank=True
+                                      , verbose_name=_("Decision time"))
+    # review_deadline — до какого момента владелец должен ответить.
+    review_deadline = models.DateTimeField(null=True, blank=True
+                                           , verbose_name=_("Owner response deadline"))
+
 
     class Meta:
         """Порядок выдачи, ограничение дат и индекс для поиска бронирований."""
@@ -60,7 +67,9 @@ class Booking(UUIDModel, TimeStampModel):
             , models.CheckConstraint(condition=models.Q(status__in=Status.values)
                                      , name='booking_status_in')
             , models.CheckConstraint(condition=models.Q(adults__gte=1)
-                                     , name="booking_has_adult",)]
+                                     , name="booking_has_adult",)
+            , models.CheckConstraint(condition=models.Q(decision_reason__in=["", *DecisionReason.values])
+                                     , name="booking_has_decision_reason",)]
         indexes = [
             models.Index(
                 fields=["listing", "status", "start_date"],

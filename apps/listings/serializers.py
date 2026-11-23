@@ -24,7 +24,7 @@ class ListingSerializer(ContactModelSerializer):
         model = Listing
         fields = ["id", "user", "title", "description", "property_type",
                   "price_per_night", "rooms", "city", "city_district", "street",
-                "house", "plz", "status", "files",
+                "house", "apartment", "plz", "status", "files",
                   "show_phone", "show_email",
                   "contact_phone", "contact_email",
                   ]
