@@ -14,7 +14,7 @@ class ListingAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'title', "description", "user", 'price_per_night'
                         , 'property_type', 'status', 'created_at'
-                        , "city", "city_district", "street", "house", "plz")
+                        , "city", "city_district", "street", "house", "apartment", "plz")
     list_select_related = ('user', "city", "city_district")
     search_fields = ('title', 'description'
                          , "street", "house", "plz", "city__name")
