@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
 
-from .models import  Property, PropertyFile, City
-from .utils.services import save_property_file
+from .models import  Listing, ListingFile, City
+from .utils.services import save_listing_file
 
 # Register your models here.
-@admin.register(Property)
-class PropertyAdmin(admin.ModelAdmin):
+@admin.register(Listing)
+class ListingAdmin(admin.ModelAdmin):
     """Настройки просмотра и редактирования объявлений в админке."""
 
     list_display = ('id', 'title', "description", "user", 'price_per_night'
@@ -23,24 +23,24 @@ class PropertyAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
 
-@admin.register(PropertyFile)
-class PropertyFileAdmin(admin.ModelAdmin):
+@admin.register(ListingFile)
+class ListingFileAdmin(admin.ModelAdmin):
     """Управление вложениями с проверкой лимита файлов объявления."""
 
-    list_display = ("id", "title", "property", "file")
-    list_select_related = ("property",)
-    search_fields = ("title", "property__title")
+    list_display = ("id", "title", "listing", "file")
+    list_select_related = ("listing",)
+    search_fields = ("title", "listing__title")
     ordering = ("title", "-created_at")
 
     def get_readonly_fields(self, request, obj=None):
         """Закрепить существующее вложение за его объявлением."""
         if obj is not None:
-            return ("property",)
+            return ("listing",)
         return ()
 
     def save_model(self, request, obj, form, change):
         """Сохранить вложение через общий сервис."""
-        save_property_file(attachment=obj)
+        save_listing_file(attachment=obj)
 
     def changeform_view(
         self,

@@ -5,31 +5,31 @@ from django.utils.translation import gettext_lazy as _
 from apps.base.models import TimeStampModel, UUIDModel, TimeStampMod
 from django.conf import settings
 
-from apps.listings.models import Property
+from apps.listings.models import Listing
 # Create your models here.
 
-class PropertyView(TimeStampMod, UUIDModel):
+class ListingView(TimeStampMod, UUIDModel):
     """Одно открытие страницы объявления."""
 
-    property = models.ForeignKey(Property, on_delete=models.CASCADE
-                                 , related_name="views", verbose_name=_('Property'))
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE
+                                , related_name="views", verbose_name=_('Listing'))
 
     class Meta:
         """Настройки таблицы и индекса по объявлению и времени просмотра."""
 
-        db_table = 'property_views'
-        indexes = [models.Index(fields=['property', 'created_at'], name='property_views_time_idx')]
+        db_table = 'listing_views'
+        indexes = [models.Index(fields=['listing', 'created_at'], name='listing_views_time_idx')]
         ordering = ['-created_at']
-        verbose_name = _('Property View')
-        verbose_name_plural = _('Property Views')
+        verbose_name = _('Listing View')
+        verbose_name_plural = _('Listing Views')
 
         ## Внутри обработчика после получения доступного посетителю объявления.
             # if request.method == "GET":
-            #     PropertyView.objects.create(property=listing)
+            #     ListingView.objects.create(listing=listing)
 
         # Как посчитать просмотры за период?
-        # views_count = PropertyView.objects.filter(
-        #     property=listing,
+        # views_count = ListingView.objects.filter(
+        #     listing=listing,
         #     created_at__gte=period_start,
         #     created_at__lt=period_end,
         # ).count()

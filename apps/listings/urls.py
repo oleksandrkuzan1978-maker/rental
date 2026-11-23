@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .views import PropertyCreateView, PropertyUpdateView
+from .views import ListingCreateView, ListingUpdateView
 
 urlpatterns = [
-    path('', PropertyCreateView.as_view(), name='property_create'),
-    path('<uuid:pk>/', PropertyUpdateView.as_view(), name='property_update'),
+    path('', ListingCreateView.as_view(), name='listing_create'),
+    path('<uuid:pk>/', ListingUpdateView.as_view(), name='listing_update'),
 ]

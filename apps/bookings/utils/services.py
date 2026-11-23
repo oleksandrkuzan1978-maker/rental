@@ -1,26 +1,26 @@
 """Создание и подтверждение заявок на бронирование."""
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from apps.listings.models import  Property, PropertyStatus
+from apps.listings.models import  Listing, ListingStatus
 from apps.bookings.models import Booking
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
 
-def  confirm_booking(*, property_id, booking_id):
+def  confirm_booking(*, listing_id, booking_id):
     """Подтвердить ожидающую заявку и вернуть её.
 
-    Ключевые параметры property_id и booking_id указывают на объявление
+    Ключевые параметры listing_id и booking_id указывают на объявление
     и заявку. Проверка пересечений и смена статуса выполняются в транзакции.
     Уже подтверждённая заявка возвращается сразу. Пересечение или другой
     статус вызывают ValidationError. Отсутствующая запись вызывает DoesNotExist.
     """
     with transaction.atomic():
         # Общая блокировка заставляет подтверждения одного объекта идти по очереди.
-        Property.objects.select_for_update().get(pk=property_id)
+        Listing.objects.select_for_update().get(pk=listing_id)
 
         # Блокируем заявку на время проверки статуса и дат.
-        booking = Booking.objects.select_for_update().get(pk=booking_id, property=property_id)
+        booking = Booking.objects.select_for_update().get(pk=booking_id, listing=listing_id)
         if booking.status == Booking.Status.CONFIRMED:
             return booking
         if booking.status != Booking.Status.PENDING:
@@ -29,7 +29,7 @@ def  confirm_booking(*, property_id, booking_id):
 
         # Блокирующее чтение проверяет актуальные подтверждённые брони.
         has_overlap = Booking.objects.select_for_update().filter(
-            property_id=property_id,
+            listing_id=listing_id,
             status__in=[
                 Booking.Status.PENDING,
                 Booking.Status.CONFIRMED,
@@ -58,12 +58,12 @@ def _add_one_year(day):
 
 @transaction.atomic # На MySQL/InnoDB транзакция удержит блокировку объявления до сохранения брони,
 # поэтому параллельное отключение объявления не сможет вклиниться между проверкой и записью.
-def create_booking(*, user, property_id, start_date, end_date, description="",
+def create_booking(*, user, listing_id, start_date, end_date, description="",
                    adults=1, children=0, has_pets=False,
                    show_phone=True, show_email=True):
     """Создать ожидающую заявку и вернуть её с рассчитанной стоимостью.
 
-    Передайте арендатора user, идентификатор объявления property_id,
+    Передайте арендатора user, идентификатор объявления listing_id,
     дату заезда start_date и дату выезда end_date по имени. День выезда
     исключается из числа оплачиваемых ночей. Недоступное объявление
     или недопустимые данные вызывают ValidationError.
@@ -83,18 +83,18 @@ def create_booking(*, user, property_id, start_date, end_date, description="",
     nights = (end_date - start_date).days
 
     try:
-        listing = Property.objects.select_for_update().get(pk=property_id
-                                                           , status=PropertyStatus.PUBLISHED
-                                                           , deleted_at__isnull=True
-                                                           , price_per_night__isnull=False)
+        listing = Listing.objects.select_for_update().get(pk=listing_id
+                                                          , status=ListingStatus.PUBLISHED
+                                                          , deleted_at__isnull=True
+                                                          , price_per_night__isnull=False)
     # Запрет новых заявок на неактивное объявление
-    except Property.DoesNotExist:
+    except Listing.DoesNotExist:
         raise ValidationError(_("This listing is not available for booking.")
                               , code="listing_unavailable" ) from None
 
     # проверка наличия броней на пересечение по датам
     has_overlap = Booking.objects.select_for_update().filter(
-        property=listing,
+        listing=listing,
         status__in=[
             Booking.Status.PENDING,
             Booking.Status.CONFIRMED,
@@ -112,7 +112,7 @@ def create_booking(*, user, property_id, start_date, end_date, description="",
 
     booking = Booking(
         user=user,
-        property=listing,
+        listing=listing,
         start_date=start_date,
         end_date=end_date,
         total_price=listing.price_per_night * nights,

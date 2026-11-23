@@ -23,9 +23,9 @@ ags_validator = RegexValidator(
     message=_("AGS must contain exactly 8 digits."),
 )
 
-# Максимальный размер файла — 2 МиБ
+# Максимальный размер файла — 5 МиБ
 def validate_file_size(file):
-    """Вызвать ValidationError для файла размером больше 2 МиБ."""
+    """Вызвать ValidationError для файла размером больше 5 МиБ."""
     max_size = 5 * 1024 * 1024
 
     if file.size > max_size:
@@ -37,19 +37,17 @@ def validate_file_size(file):
 def validate_plz(value):
     """Проверить, что почтовый индекс состоит ровно из пяти цифр."""
     if not re.fullmatch(r"[0-9]{5}", value):
-        raise ValidationError(
-            _("PLZ must contain exactly 5 digits.")
-        )
+        raise ValidationError(_("PLZ must contain exactly 5 digits."))
 
 
-def property_file_upload_to(instance, filename):
+def listing_file_upload_to(instance, filename):
     """Вернуть путь к файлу по UUID владельца, объявления и вложения.
 
     Расширение берётся из filename и переводится в нижний регистр.
     """
     extension = Path(filename).suffix.lower()
     return (
-        f"users/{instance.property.user_id}/"
-        f"properties/{instance.property_id}/"
+        f"users/{instance.listing.user_id}/"
+        f"listings/{instance.listing_id}/"
         f"{instance.pk}{extension}"
     )

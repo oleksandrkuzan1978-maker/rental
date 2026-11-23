@@ -28,7 +28,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel):
     class Meta:
         """Порядок выдачи аккаунтов и ограничение мягкого удаления."""
 
-        db_table = _("users")
+        db_table = "users"
         verbose_name = _("user")
         verbose_name_plural = _("users")
         ordering = ["-created_at"]

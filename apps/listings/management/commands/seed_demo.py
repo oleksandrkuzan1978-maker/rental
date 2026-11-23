@@ -14,10 +14,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.analytics.models import PropertyView, SearchHistory
+from apps.analytics.models import ListingView, SearchHistory
 from apps.bookings.models import Booking
 from apps.bookings.utils.services import confirm_booking, create_booking
-from apps.listings.models import City, Property, PropertyFile, Types, PropertyStatus
+from apps.listings.models import City, Listing, ListingFile, Types, ListingStatus
 from apps.reviews.services import create_review
 from apps.users.models import User
 
@@ -76,11 +76,11 @@ class Command(BaseCommand):
             email=TENANT_EMAIL, name="Demo tenant", password=token_urlsafe(24)
         )
 
-        berlin = Property.objects.create(
+        berlin = Listing.objects.create(
             user=landlord,
             title="Demo: Apartment in Berlin",
             description="Fictional listing for testing the rental project.",
-            status=PropertyStatus.PUBLISHED,
+            status=ListingStatus.PUBLISHED,
             property_type=Types.APARTMENT,
             price_per_night=Decimal("79.90"),
             rooms=2,
@@ -89,11 +89,11 @@ class Command(BaseCommand):
             house="12a",
             plz="10115",
         )
-        dortmund = Property.objects.create(
+        dortmund = Listing.objects.create(
             user=landlord,
             title="Demo: Studio in Dortmund",
             description="Fictional listing for testing the rental project.",
-            status=PropertyStatus.PUBLISHED,
+            status=ListingStatus.PUBLISHED,
             property_type=Types.STUDIO,
             price_per_night=Decimal("59.00"),
             rooms=1,
@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
         past = Booking(
             user=tenant,
-            property=berlin,
+            listing=berlin,
             start_date=start_date,
             end_date=end_date,
             total_price=berlin.price_per_night * (end_date - start_date).days,
@@ -121,27 +121,27 @@ class Command(BaseCommand):
 
         upcoming = create_booking(
             user=tenant,
-            property_id=berlin.pk,
+            listing_id=berlin.pk,
             start_date=today + timedelta(days=7),
             end_date=today + timedelta(days=10),
         )
-        confirm_booking(property_id=berlin.pk, booking_id=upcoming.pk)
+        confirm_booking(listing_id=berlin.pk, booking_id=upcoming.pk)
         create_booking(
             user=tenant,
-            property_id=dortmund.pk,
+            listing_id=dortmund.pk,
             start_date=today + timedelta(days=14),
             end_date=today + timedelta(days=16),
         )
 
-        PropertyView.objects.create(property=berlin)
-        PropertyView.objects.create(property=berlin)
-        PropertyView.objects.create(property=dortmund)
+        ListingView.objects.create(listing=berlin)
+        ListingView.objects.create(listing=berlin)
+        ListingView.objects.create(listing=dortmund)
         SearchHistory.objects.create(user=tenant, query="Wohnung Berlin")
         SearchHistory.objects.create(query="Wohnung Berlin")
         SearchHistory.objects.create(user=tenant, query="Studio Dortmund")
 
         for listing in (berlin, dortmund):
-            attachment = PropertyFile(property=listing, title="Demo image")
+            attachment = ListingFile(listing=listing, title="Demo image")
             attachment.file.save("demo.png", ContentFile(DEMO_PNG), save=False)
             saved_files.append((attachment.file.storage, attachment.file.name))
             attachment.full_clean()

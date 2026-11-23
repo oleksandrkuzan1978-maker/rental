@@ -1,27 +1,27 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import Property, PropertyFile, State, City
+from .models import Listing, ListingFile, State, City
 from apps.base.serializers import ContactModelSerializer
 
 
-class PropertyFileSerializer(serializers.ModelSerializer):
+class ListingFileSerializer(serializers.ModelSerializer):
     """Сериализатор файлов, прикреплённых к объявлению."""
 
     class Meta:
         """Модель и поля файла в API."""
 
-        model = PropertyFile
+        model = ListingFile
         fields = ['id', 'file']
 
 
-class PropertySerializer(ContactModelSerializer):
+class ListingSerializer(ContactModelSerializer):
     """Сериализатор объявлений со списком прикреплённых файлов."""
-    files = PropertyFileSerializer(many=True, read_only=True)
+    files = ListingFileSerializer(many=True, read_only=True)
 
     class Meta:
         """Модель и поля объявления в API."""
 
-        model = Property
+        model = Listing
         fields = ["id", "user", "title", "description", "property_type",
                   "price_per_night", "rooms", "city", "city_district", "street",
                 "house", "plz", "status", "files",
@@ -31,20 +31,20 @@ class PropertySerializer(ContactModelSerializer):
         read_only_fields = ["id", "user"]
 
     def create(self, validated_data):
-        property_obj = Property(**validated_data)
-        return self._save_property(property_obj)
+        listing_obj = Listing(**validated_data)
+        return self._save_listing(listing_obj)
 
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
             setattr(instance, field, value)
-        return self._save_property(instance)
+        return self._save_listing(instance)
     # переопределение create и update нужно для вызова full_clean,
     # чтобы перед каждым сохранением объявления выполнялись проверки из Property.clean()
     # (обычный save() автоматически эти проверки не запускает)
-    def _save_property(self, property_obj):
+    def _save_listing(self, listing_obj):
         """Проверить модель и сохранить объявление."""
         try:
-            property_obj.full_clean()
+            listing_obj.full_clean()
         except DjangoValidationError as error:
             # Если нужно выводить каждую ошибку возле соответствующего поля формы,
             # тогда сообщения выводим в таком виде
@@ -53,8 +53,8 @@ class PropertySerializer(ContactModelSerializer):
                     else {"non_field_errors": error.messages})
             raise serializers.ValidationError(detail) from error
 
-        property_obj.save()
-        return property_obj
+        listing_obj.save()
+        return listing_obj
 
 
 class StateSerializer(serializers.ModelSerializer):

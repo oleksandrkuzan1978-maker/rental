@@ -2,21 +2,21 @@
 
 # from itertools import count
 from django.contrib import admin
-from .models import PropertyView, SearchHistory
+from .models import ListingView, SearchHistory
 # from django.contrib import messages
 # from django.utils.formats import date_format
 # from django.utils import timezone
 
 # Register your models here.
 
-@admin.register(PropertyView)
-class PropertyViewAdmin(admin.ModelAdmin):
+@admin.register(ListingView)
+class ListingViewAdmin(admin.ModelAdmin):
     """Настройки поиска и фильтрации просмотров в админке."""
 
-    list_display = ('id', 'property', 'created_at')
-    list_select_related = ('property',)
-    search_fields = ("property__id",)
-    list_filter = ('property',)
+    list_display = ('id', 'listing', 'created_at')
+    list_select_related = ('listing',)
+    search_fields = ("listing__id",)
+    list_filter = ('listing',)
     ordering = ('-created_at',)
 
 

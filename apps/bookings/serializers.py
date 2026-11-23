@@ -15,7 +15,7 @@ class BookingSerializer(ContactModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            "id", "user", "property", "start_date",
+            "id", "user", "listing", "start_date",
             "end_date", "description", "total_price", "status",
             "adults",
             "children",
@@ -29,9 +29,9 @@ class BookingSerializer(ContactModelSerializer):
                                                                 # игнорируются при проверке входящих данных.
                                                                 # Их назначает сервер.
     def create(self, validated_data):
-        property_obj = validated_data.pop("property")
+        listing_obj = validated_data.pop("listing")
         try:
-            return create_booking(property_id=property_obj.pk,
+            return create_booking(listing_id=listing_obj.pk,
                                   **validated_data)
         except DjangoValidationError as error:
             detail = (
@@ -46,5 +46,5 @@ class BookingUpdateSerializer(ContactModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            "id", "user", "property", "start_date",
+            "id", "user", "listing", "start_date",
         ]

@@ -9,11 +9,11 @@ from .models import  Booking
 class BookingAdmin(admin.ModelAdmin):
     """Показывает даты, стоимость и статус бронирования в админке."""
 
-    list_display = ('id', 'user', 'property', 'start_date', 'end_date',
+    list_display = ('id', 'user', 'listing', 'start_date', 'end_date',
                     'total_price', 'status',
                     "adults", "children", "has_pets")
-    readonly_fields = ('id', 'user', 'property', 'start_date', "status", 'end_date', 'total_price', 'description',)
-    list_select_related = ('user', 'property')
-    search_fields = ('user__email', "property__title")
+    readonly_fields = ('id', 'user', 'listing', 'start_date', "status", 'end_date', 'total_price', 'description',)
+    list_select_related = ('user', 'listing')
+    search_fields = ('user__email', "listing__title")
     list_filter = ("start_date", 'end_date', 'status')
     ordering = ('-created_at',)

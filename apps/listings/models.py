@@ -8,7 +8,7 @@ from apps.listings.utils.validators import (
     validate_file_extension,
     validate_file_size,
     state_code_validator,
-    property_file_upload_to,
+    listing_file_upload_to,
     ags_validator,
     validate_plz,
 )
@@ -106,20 +106,20 @@ class Types(models.TextChoices):
     TOWNHOUSE = "townhouse", _("Townhouse")
 
 
-class PropertyStatus(models.TextChoices):
+class ListingStatus(models.TextChoices):
     """Допустимые статусы объявления: черновик, опубликовано и приостановлено."""
 
-    DRAFT = "draft", "Draft" # режим черновика
-    PUBLISHED = "published", "Published" # Объявление активно
-    PAUSED = "paused", "Paused" # Объявление НЕ активно (is_active=False)
+    DRAFT = "draft", _("Draft") # режим черновика
+    PUBLISHED = "published", _("Published") # Объявление активно
+    PAUSED = "paused", _("Paused") # Объявление НЕ активно (is_active=False)
 
 
-class Property(UUIDModel, TimeStampModel):
+class Listing(UUIDModel, TimeStampModel):
     """Объявление владельца с типом жилья, тарифом и статусом активности."""
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL
                              , on_delete=models.CASCADE
-                             , related_name='properties')
+                             , related_name='listings')
     title = models.CharField(max_length=254, verbose_name=_('Title'))
     description = models.TextField(blank=True, validators=[MaxLengthValidator(5000)], verbose_name=_("Description"))
     price_per_night = models.DecimalField(max_digits=10
@@ -132,22 +132,22 @@ class Property(UUIDModel, TimeStampModel):
                                 , verbose_name=_("Rooms"))
     status = models.CharField(
         max_length=10,
-        choices=PropertyStatus,
-        default=PropertyStatus.DRAFT,
+        choices=ListingStatus,
+        default=ListingStatus.DRAFT,
     )
     #is_active = models.BooleanField(default=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
     property_type = models.CharField(max_length=15, choices=Types, verbose_name=_("Type"))
 
     city = models.ForeignKey(City, on_delete=models.PROTECT, null=True, blank=True
-                             , related_name="properties"
+                             , related_name="listings"
                              , verbose_name=_("City"))
     city_district = models.ForeignKey(
         CityDistrict,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name="properties",
+        related_name="listings",
     )
     street = models.CharField(max_length=100, blank=True, verbose_name=_("Street"))
     house = models.CharField(max_length=15, blank=True, verbose_name=_("House"))
@@ -159,9 +159,9 @@ class Property(UUIDModel, TimeStampModel):
     class Meta:
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
 
-        db_table = 'properties'
-        verbose_name = _('Property')
-        verbose_name_plural = _('Properties')
+        db_table = 'listings'
+        verbose_name = _('Listing')
+        verbose_name_plural = _('Listings')
         ordering = ["-created_at"]
         indexes = [
             models.Index(
@@ -191,10 +191,10 @@ class Property(UUIDModel, TimeStampModel):
             models.CheckConstraint(condition=models.Q(property_type__in=Types.values),
                                    name='property_type_valid')
             , models.CheckConstraint(condition=(models.Q(deleted_at__isnull=True)
-                                           | ~models.Q(status=PropertyStatus.PUBLISHED)),
-                                    name="property_deleted_at_",)
-            , models.CheckConstraint(condition=models.Q(status__in=PropertyStatus.values)
-                                     , name='property_status_in')
+                                                | ~models.Q(status=ListingStatus.PUBLISHED)),
+                                     name="listing_deleted_at_", )
+            , models.CheckConstraint(condition=models.Q(status__in=ListingStatus.values)
+                                     , name='listing_status_in')
 ]
 
     def clean(self):
@@ -211,7 +211,7 @@ class Property(UUIDModel, TimeStampModel):
             if not district_matches:
                 errors["city_district"] = _( "Select the district that belongs to the specified city.")
 
-        if self.status == PropertyStatus.PUBLISHED:
+        if self.status == ListingStatus.PUBLISHED:
             if self.city_id is None:
                 errors["city"] = _("Specify the city before publishing the listing.")
             if not self.street.strip():
@@ -234,7 +234,7 @@ class Property(UUIDModel, TimeStampModel):
                 return
             now = timezone.now()
 
-            self.status = PropertyStatus.PAUSED
+            self.status = ListingStatus.PAUSED
             self.deleted_at = now
 
             self.save(update_fields=[
@@ -245,29 +245,29 @@ class Property(UUIDModel, TimeStampModel):
 
     def __str__(self):
         """Вернуть заголовок объявления вместе с его идентификатором."""
-        return f"Property: '{self.title}', ({self.pk})"
+        return f"Listing: '{self.title}', ({self.pk})"
 
 
-class PropertyFile(UUIDModel, TimeStampModel):
+class ListingFile(UUIDModel, TimeStampModel):
     """Вложение объявления с названием и путём к файлу в хранилище."""
 
     title = models.CharField(max_length=120, verbose_name=_("Title of the file"))
-    file = models.FileField(max_length=255, upload_to=property_file_upload_to
+    file = models.FileField(max_length=255, upload_to=listing_file_upload_to
                             , validators=[validate_file_size
             , validate_file_extension]
                             , verbose_name=_("File"))
-    property = models.ForeignKey(Property, on_delete=models.CASCADE
-                                 , related_name="files"
-                                 , verbose_name=_("Property"))
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE
+                                , related_name="files"
+                                , verbose_name=_("Listing"))
 
     class Meta:
         """Настройки таблицы и порядка выдачи вложений."""
 
-        db_table = 'property_files'
+        db_table = 'listing_files'
         ordering = ['title', '-created_at']
-        verbose_name = _('Property file')
-        verbose_name_plural = _('Property files')
+        verbose_name = _('Listing file')
+        verbose_name_plural = _('Listing files')
 
     def __str__(self):
         """Вернуть название вложения."""
-        return f"PropertyFile: {self.title}"
+        return f"ListingFile: {self.title}"

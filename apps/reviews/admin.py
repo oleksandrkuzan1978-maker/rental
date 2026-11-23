@@ -3,8 +3,6 @@
 # from itertools import count
 from django.contrib import admin
 from .models import  Review
-from ..bookings.models import Booking
-from .services import is_booking_tenant
 
 # from django.contrib import messages
 # from django.utils.formats import date_format
@@ -17,8 +15,8 @@ class ReviewAdmin(admin.ModelAdmin):
     """Настройки просмотра и поиска отзывов в админке."""
 
     list_display = ('id', 'rating', 'comment')
-    list_select_related = ("booking__user", "booking__property")
-    search_fields = ('booking__user__email', "booking__property__title", "rating")
+    list_select_related = ("booking__user", "booking__listing")
+    search_fields = ('booking__user__email', "booking__listing__title", "rating")
     list_filter = ("rating", "booking__status",)
     ordering = ('-rating',)
 # Нижеследующие методы убрать, так как зачем нам создавать или менять отзывы через админку.

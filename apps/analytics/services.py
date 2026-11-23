@@ -1,12 +1,12 @@
-from .models import PropertyView, SearchHistory
+from .models import ListingView, SearchHistory
 
 
-def count_property_views(*, property_id=None):
+def count_listing_views(*, listing_id=None):
     """Посчитать все просмотры или просмотры одного объявления."""
-    views = PropertyView.objects.all()
+    views = ListingView.objects.all()
 
-    if property_id is not None:
-        views = views.filter(property_id=property_id)
+    if listing_id is not None:
+        views = views.filter(listing_id=listing_id)
 
     return views.count()
 

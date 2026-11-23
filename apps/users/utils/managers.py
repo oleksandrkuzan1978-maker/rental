@@ -22,7 +22,7 @@ class UserManager(BaseUserManager):
         if not extra_fields.get(field):
             raise ValueError(_(f'Field {field} is required'))
 
-        email = self.normalize_email(email) # Приводим доменную часть email к нижнему регистру:
+        email = self.normalize_email(email).lower() # Приводим доменную часть email к нижнему регистру:
         user = self.model(email=email, **extra_fields) # Создаёт объект модели User в памяти.
         user.set_password(password) # set_password() превращает пароль в защищённый хеш.
         user.save(using=self._db) # Сохраняем пользователя в базе, выбранной менеджером.
