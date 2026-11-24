@@ -1,9 +1,8 @@
-from django.shortcuts import get_object_or_404
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Listing, City
-from .serializers import ListingSerializer, CityDistrictSerializer
+from ..models import Listing
+from ..serializers import ListingSerializer
 
 # Create your views here.
 
@@ -30,20 +29,3 @@ class ListingUpdateView(UpdateAPIView):
             user=self.request.user
             , deleted_at__isnull=True
         )
-
-
-class CityDistrictListView(ListAPIView):
-    """Вернуть районы указанного города."""
-
-    serializer_class = CityDistrictSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-
-    def get_queryset(self):
-        """Выбрать районы города, указанного в URL."""
-        city = get_object_or_404(
-            City,
-            pk=self.kwargs["city_id"],
-        )
-
-        return city.districts.order_by("name", "pk")

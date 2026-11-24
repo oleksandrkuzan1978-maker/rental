@@ -17,7 +17,8 @@ from django.utils import timezone
 from apps.analytics.models import ListingView, SearchHistory
 from apps.bookings.models import Booking
 from apps.bookings.services import confirm_booking, create_booking
-from apps.listings.models import City, Listing, ListingFile, Types, ListingStatus
+from apps.listings.utils.choices import Types, ListingStatus
+from apps.listings.models import City, Listing, ListingFile
 from apps.reviews.services import create_review
 from apps.users.models import User
 

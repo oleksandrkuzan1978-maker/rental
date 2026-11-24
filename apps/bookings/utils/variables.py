@@ -6,3 +6,6 @@ MAINTENANCE_BATCH_SIZE = 100 # Максимальное количество з�
 
 MAX_ADVANCE_BOOKING_MONTHS = 9 # ограничивает дату заезда относительно сегодня
 MAX_STAY_MONTHS = 3 # ограничивает дату выезда относительно заезда.
+
+# CHECK_IN_TIME = time(hour=14, minute=0)  # час начала срока бронирования
+# CHECK_OUT_TIME = time(hour=11, minute=0) # час окончания срока бронирования

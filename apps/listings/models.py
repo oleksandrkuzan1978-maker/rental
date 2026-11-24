@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from apps.listings.utils.choices import Types, ListingStatus
 from apps.listings.utils.validators import (
     validate_file_extension,
     validate_file_size,
@@ -94,24 +95,6 @@ class CityDistrict(models.Model):
     def __str__(self):
         """Вернуть название района и его города."""
         return f'{_('District name')}: {self.name}'
-
-
-class Types(models.TextChoices):
-    """Допустимые типы объектов недвижимости."""
-
-    APARTMENT = "apartment", _("Apartment")
-    HOUSE = "house", _("House")
-    STUDIO = "studio", _("Studio")
-    ROOM = "room", _("Room")
-    TOWNHOUSE = "townhouse", _("Townhouse")
-
-
-class ListingStatus(models.TextChoices):
-    """Допустимые статусы объявления: черновик, опубликовано и приостановлено."""
-
-    DRAFT = "draft", _("Draft") # режим черновика
-    PUBLISHED = "published", _("Published") # Объявление активно
-    PAUSED = "paused", _("Paused") # Объявление НЕ активно (is_active=False)
 
 
 class Listing(UUIDModel, TimeStampModel):

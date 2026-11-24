@@ -1,7 +1,7 @@
 """Проверка доступности объявления и условий проживания."""
 
 from apps.bookings.models import Booking
-from apps.listings.models import ListingStatus
+from apps.listings.utils.choices import ListingStatus
 
 from ..utils.choices import DecisionReason, Status
 

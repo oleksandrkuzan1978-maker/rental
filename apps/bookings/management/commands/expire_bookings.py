@@ -15,6 +15,7 @@ class Command(BaseCommand):
     """Обработать порцию заявок с истёкшим сроком рассмотрения."""
     def handle(self, *args, **options):
         """Выбрать просроченные заявки и обработать каждую отдельно."""
+
         booking_ids = list(
             Booking.objects.filter(
                 status=Status.PENDING,
