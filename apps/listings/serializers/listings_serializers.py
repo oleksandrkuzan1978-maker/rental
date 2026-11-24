@@ -32,6 +32,7 @@ class ListingSerializer(ContactModelSerializer):
                   "show_phone", "show_email",
                   "contact_phone", "contact_email",
                   "max_guests", "pets_allowed", "instant_booking_enabled",
+                  "check_in_time", "check_out_time",
                   ]
         read_only_fields = ["id", "user"]
 

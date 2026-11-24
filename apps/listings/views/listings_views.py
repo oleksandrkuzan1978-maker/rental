@@ -1,8 +1,9 @@
-from rest_framework.generics import CreateAPIView, UpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import CreateAPIView, UpdateAPIView, RetrieveAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from ..models import Listing
 from ..serializers import ListingSerializer
+from ..utils.choices import ListingStatus
 
 # Create your views here.
 
@@ -29,3 +30,19 @@ class ListingUpdateView(UpdateAPIView):
             user=self.request.user
             , deleted_at__isnull=True
         )
+
+class ListingDetailView(RetrieveAPIView):
+    """Показать посетителю опубликованное неудалённое объявление."""
+
+    serializer_class = ListingSerializer
+    permission_classes = [AllowAny]
+
+    queryset = (
+        Listing.objects
+        .filter(
+            status=ListingStatus.PUBLISHED,
+            deleted_at__isnull=True,
+        )
+        .select_related("user")
+    )
+

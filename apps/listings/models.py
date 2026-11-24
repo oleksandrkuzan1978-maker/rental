@@ -4,6 +4,10 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.db import transaction
+from apps.base.models import TimeStampModel, UUIDModel
+from django.conf import settings
+
 from apps.listings.utils.choices import Types, ListingStatus
 from apps.listings.utils.validators import (
     validate_file_extension,
@@ -13,9 +17,10 @@ from apps.listings.utils.validators import (
     ags_validator,
     validate_plz,
 )
-from django.db import transaction
-from apps.base.models import TimeStampModel, UUIDModel
-from django.conf import settings
+from .utils.variables import (
+    DEFAULT_CHECK_IN_TIME,
+    DEFAULT_CHECK_OUT_TIME,
+)
 
 
 class State(models.Model):
@@ -147,6 +152,15 @@ class Listing(UUIDModel, TimeStampModel):
     instant_booking_enabled = models.BooleanField(default=True
                                                   , verbose_name=_(
                                                     "Instant booking enabled")) # флаг мгновенного бронирования
+    check_in_time = models.TimeField(
+        default=DEFAULT_CHECK_IN_TIME,
+        verbose_name=_("Check-in from"),
+    )
+
+    check_out_time = models.TimeField(
+        default=DEFAULT_CHECK_OUT_TIME,
+        verbose_name=_("Check-out by"),
+    )
 
     class Meta:
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
