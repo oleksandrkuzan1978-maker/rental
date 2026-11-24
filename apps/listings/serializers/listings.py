@@ -1,6 +1,10 @@
-from rest_framework import serializers
+from django.db import IntegrityError
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import Listing, ListingFile, State, City
+from django.utils.translation import gettext_lazy as _
+
+from rest_framework import serializers
+
+from ..models import Listing, ListingFile
 from apps.base.serializers import ContactModelSerializer
 
 
@@ -40,39 +44,19 @@ class ListingSerializer(ContactModelSerializer):
             setattr(instance, field, value)
         return self._save_listing(instance)
     # переопределение create и update нужно для вызова full_clean,
-    # чтобы перед каждым сохранением объявления выполнялись проверки из Property.clean()
+    # чтобы перед каждым сохранением объявления выполнялись проверки из Listing.clean()
     # (обычный save() автоматически эти проверки не запускает)
     def _save_listing(self, listing_obj):
         """Проверить модель и сохранить объявление."""
         try:
             listing_obj.full_clean()
+            listing_obj.save()
         except DjangoValidationError as error:
-            # Если нужно выводить каждую ошибку возле соответствующего поля формы,
-            # тогда сообщения выводим в таком виде
-            detail=(error.message_dict
-                    if hasattr(error, 'message_dict')
-                    else {"non_field_errors": error.messages})
-            raise serializers.ValidationError(detail) from error
+            raise serializers.ValidationError(error.message_dict) from error
+        except IntegrityError as error:
+            if "unique_address" not in str(error):
+                raise
+            raise serializers.ValidationError({"non_field_errors":
+                                                _("An ad with this address already exists.")}) from error
 
-        listing_obj.save()
         return listing_obj
-
-
-class StateSerializer(serializers.ModelSerializer):
-    """Сериализатор федеральных земель."""
-
-    class Meta:
-        """Модель и поля федеральной земли в API."""
-
-        model = State
-        fields = ("code", "name")
-
-
-class CitySerializer(serializers.ModelSerializer):
-    """Сериализатор городов с указанием федеральной земли."""
-
-    class Meta:
-        """Модель и поля города в API."""
-
-        model = City
-        fields = ("id", "ags", "name", "state")

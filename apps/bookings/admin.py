@@ -22,7 +22,8 @@ class BookingAdmin(admin.ModelAdmin):
     search_fields = ('user__email', "listing__title")
     list_filter = ("start_date", 'end_date', 'status')
     ordering = ('-created_at',)
-
+    # Метод has_add_permission Django вызывает, чтобы узнать,
+    # разрешено ли добавление объектов через стандартную админку.
     def has_add_permission(self, request):
         """Запретить стандартное создание брони через админку."""
         return False
