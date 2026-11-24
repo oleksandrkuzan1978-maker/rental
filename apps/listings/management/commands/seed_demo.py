@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.analytics.models import ListingView, SearchHistory
 from apps.bookings.models import Booking
-from apps.bookings.utils.services import confirm_booking, create_booking
+from apps.bookings.services import confirm_booking, create_booking
 from apps.listings.models import City, Listing, ListingFile, Types, ListingStatus
 from apps.reviews.services import create_review
 from apps.users.models import User
@@ -84,6 +84,8 @@ class Command(BaseCommand):
             property_type=Types.APARTMENT,
             price_per_night=Decimal("79.90"),
             rooms=2,
+            max_guests=4,
+            instant_booking_enabled=False,
             city=cities["11000000"],
             street="Demo-Straße",
             house="12a",
@@ -97,6 +99,8 @@ class Command(BaseCommand):
             property_type=Types.STUDIO,
             price_per_night=Decimal("59.00"),
             rooms=1,
+            max_guests=2,
+            instant_booking_enabled=True,
             city=cities["05913000"],
             street="Demo-Weg",
             house="5",
@@ -125,7 +129,11 @@ class Command(BaseCommand):
             start_date=today + timedelta(days=7),
             end_date=today + timedelta(days=10),
         )
-        confirm_booking(listing_id=berlin.pk, booking_id=upcoming.pk)
+        confirm_booking(
+            user=landlord,
+            listing_id=berlin.pk,
+            booking_id=upcoming.pk,
+        )
         create_booking(
             user=tenant,
             listing_id=dortmund.pk,

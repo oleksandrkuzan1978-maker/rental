@@ -27,6 +27,7 @@ class ListingSerializer(ContactModelSerializer):
                 "house", "apartment", "plz", "status", "files",
                   "show_phone", "show_email",
                   "contact_phone", "contact_email",
+                  "max_guests", "pets_allowed", "instant_booking_enabled",
                   ]
         read_only_fields = ["id", "user"]
 

@@ -92,7 +92,7 @@ class CityDistrict(models.Model):
         # ]
 
     def __str__(self):
-        """Вернуть название района."""
+        """Вернуть название района и его города."""
         return f'{_('District name')}: {self.name}'
 
 

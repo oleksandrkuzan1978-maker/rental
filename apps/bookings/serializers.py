@@ -3,12 +3,17 @@ from rest_framework import serializers
 
 from apps.base.serializers import ContactModelSerializer
 from .models import Booking
-from .utils.services import create_booking
+from .services import create_booking
 
 
 class BookingSerializer(ContactModelSerializer):
     """Создание и представление бронирования."""
     guests_count = serializers.IntegerField(read_only=True)
+    # Поле decision_reason_display дает пользователю понятное название причины решения.
+    decision_reason_display = serializers.CharField(
+        source="get_decision_reason_display",
+        read_only=True,
+    )
 
     # Статус бронирования остаётся только для чтения
     # — подтверждение, отмена и завершение заявки требуют собственных правил доступа.
@@ -23,8 +28,11 @@ class BookingSerializer(ContactModelSerializer):
             "has_pets",
             "show_phone", "show_email",
             "contact_phone", "contact_email",
+            "requires_owner_approval", "decision_reason",
+            "decision_reason_display", "decided_at", "review_deadline",
         ]
-        read_only_fields = ["id", "user", "total_price", "status",] # поля включаются в ответ,
+        read_only_fields = ["id", "user", "total_price", "status",
+                            "decision_reason", "decided_at", "review_deadline",] # поля включаются в ответ,
                                                                 # Но переданные клиентом значения
                                                                 # игнорируются при проверке входящих данных.
                                                                 # Их назначает сервер.
@@ -48,3 +56,8 @@ class BookingUpdateSerializer(ContactModelSerializer):
         fields = [
             "id", "user", "listing", "start_date",
         ]
+
+class BookingDecisionSerializer(serializers.Serializer):
+    """Решение владельца по ожидающей заявке."""
+
+    approve = serializers.BooleanField()

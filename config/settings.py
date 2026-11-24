@@ -193,3 +193,22 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+# DEFAULT_FROM_EMAIL = "Rental <noreply@example.com>"
+
+
+# Для настоящей доставки настроить SMTP, например для подключения через STARTTLS:
+# MAILERS = {
+#     "default": {
+#         "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+#         "OPTIONS": {
+#             "host": env("SMTP_HOST"),
+#             "port": env.int("SMTP_PORT", default=587),
+#             "username": env("SMTP_USER"),
+#             "password": env("SMTP_PASSWORD"),
+#             "use_tls": True,
+#             "timeout": 15,
+#         },
+#     },
+# }
+#
+# DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")

@@ -1,4 +1,5 @@
 """Модель бронирования и допустимые статусы заявки."""
+from django.utils import timezone
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator
@@ -79,9 +80,14 @@ class Booking(UUIDModel, TimeStampModel):
                 fields=["user", "-created_at"], # помогает находить бронирования конкретного пользователя
                 name="booking_user_created_idx", # и упорядочивать их по времени создания.
             ),
+            models.Index(
+                fields=["status", "review_deadline"], # индекс для поиска просроченных заявок
+                name="booking_review_due_idx"
+            ),
         ]
 
     @property
     def guests_count(self):
         """Общее количество проживающих."""
         return self.adults + self.children
+
