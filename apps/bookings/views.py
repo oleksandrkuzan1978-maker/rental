@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.generics import (
     CreateAPIView,
     GenericAPIView,
-    RetrieveAPIView,
+    RetrieveAPIView, UpdateAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,6 +16,7 @@ from .models import Booking
 from .serializers import (
     BookingDecisionSerializer,
     BookingSerializer,
+    BookingUpdateSerializer,
 )
 from .services import decide_booking
 
@@ -87,6 +88,12 @@ class BookingDecisionView(GenericAPIView):
             ).data
         )
 
+class BookingUpdateView(UpdateAPIView):
+    serializer_class = BookingUpdateSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Booking.objects.filter(user=self.request.user)
 
 
 

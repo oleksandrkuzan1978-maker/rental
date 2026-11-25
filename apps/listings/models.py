@@ -1,7 +1,7 @@
 """Объявления о недвижимости, вложения, адреса и справочники Германии."""
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MaxLengthValidator, MinValueValidator
+from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import transaction
@@ -20,6 +20,7 @@ from apps.listings.utils.validators import (
 from .utils.variables import (
     DEFAULT_CHECK_IN_TIME,
     DEFAULT_CHECK_OUT_TIME,
+    MAX_ROOMS,
 )
 
 
@@ -117,6 +118,7 @@ class Listing(UUIDModel, TimeStampModel):
                                           , verbose_name=_("Price per night"))
     rooms = models.DecimalField(max_digits=4, decimal_places=1
                                 , null=True, blank=True
+                                , validators=[MaxValueValidator(MAX_ROOMS)]
                                 , verbose_name=_("Rooms"))
     status = models.CharField(
         max_length=10,
@@ -193,6 +195,13 @@ class Listing(UUIDModel, TimeStampModel):
                         | models.Q(rooms__gt=0)
                 ),
                 name="property_rooms_positive_or_null",
+            ),
+            models.CheckConstraint(
+                condition=(
+                        models.Q(rooms__isnull=True)
+                        | models.Q(rooms__lte=MAX_ROOMS)
+                ),
+                name="listing_rooms_max",
             ),
             models.CheckConstraint(condition=models.Q(property_type__in=Types.values)
                                      , name='property_type_valid')

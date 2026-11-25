@@ -1,9 +1,14 @@
+from django.db import transaction
+from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from rest_framework.serializers import as_serializer_error
 
 from apps.base.serializers import ContactModelSerializer
 from .models import Booking
-from .services import create_booking
+from .services import create_booking, lock_booking, update_booking
+from .utils.choices import Status
+from .utils.variables import EDITABLE_BOOKING_FIELDS, OWNER_REVIEW_TIMEOUT
 
 
 class BookingSerializer(ContactModelSerializer):
@@ -30,8 +35,9 @@ class BookingSerializer(ContactModelSerializer):
             "contact_phone", "contact_email",
             "requires_owner_approval", "decision_reason",
             "decision_reason_display", "decided_at", "review_deadline",
+            "edit_count"
         ]
-        read_only_fields = ["id", "user", "total_price", "status",
+        read_only_fields = ["id", "user", "total_price", "status", "edit_count",
                             "decision_reason", "decided_at", "review_deadline",] # поля включаются в ответ,
                                                                 # Но переданные клиентом значения
                                                                 # игнорируются при проверке входящих данных.
@@ -49,13 +55,30 @@ class BookingSerializer(ContactModelSerializer):
             )
             raise serializers.ValidationError(detail) from error
 
-class BookingUpdateSerializer(ContactModelSerializer):
-    """Редактирование описания и настроек контактов бронирования."""
+
+class BookingUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = [
-            "id", "user", "listing", "start_date",
-        ]
+        fields = EDITABLE_BOOKING_FIELDS
+
+    def update(self, instance, validated_data):
+        try:
+            return update_booking(
+                user=self.context["request"].user,
+                booking_id=instance.pk,
+                changes=validated_data,
+            )
+        except DjangoValidationError as error:
+            raise serializers.ValidationError(
+                as_serializer_error(error)
+            ) from error
+
+    def to_representation(self, instance):
+        return BookingSerializer(
+            instance,
+            context=self.context,
+        ).data
+
 
 class BookingDecisionSerializer(serializers.Serializer):
     """Решение владельца по ожидающей заявке."""

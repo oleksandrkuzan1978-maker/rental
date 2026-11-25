@@ -24,13 +24,3 @@ class TimeStampModel(models.Model):
         """Настройки абстрактной модели двух временных меток."""
 
         abstract = True
-
-class TimeStampMod(models.Model):
-    """Абстрактная модель с датой создания записи."""
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        """Настройки абстрактной модели даты создания."""
-
-        abstract = True

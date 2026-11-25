@@ -2,17 +2,18 @@
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from apps.base.models import TimeStampModel, UUIDModel, TimeStampMod
+from apps.base.models import TimeStampModel, UUIDModel
 from django.conf import settings
 
 from apps.listings.models import Listing
 # Create your models here.
 
-class ListingView(TimeStampMod, UUIDModel):
+class ListingView(UUIDModel):
     """Одно открытие страницы объявления."""
 
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE
                                 , related_name="views", verbose_name=_('Listing'))
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         """Настройки таблицы и индекса по объявлению и времени просмотра."""
@@ -35,7 +36,7 @@ class ListingView(TimeStampMod, UUIDModel):
         # ).count()
 
 
-class SearchHistory(TimeStampMod, UUIDModel):
+class SearchHistory(UUIDModel):
     """Один поисковый запрос посетителя."""
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL
@@ -43,6 +44,7 @@ class SearchHistory(TimeStampMod, UUIDModel):
                              , null=True, blank=True
                              , related_name="search_history", verbose_name=_('User'))
     query = models.CharField(max_length=255, verbose_name=_('Query'))
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         """Настройки таблицы и сортировки запросов по времени."""

@@ -27,3 +27,7 @@ class BookingAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """Запретить стандартное создание брони через админку."""
         return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Сохранить историю бронирований."""
+        return False
