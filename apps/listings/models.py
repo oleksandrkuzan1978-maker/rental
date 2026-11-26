@@ -3,9 +3,9 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
-from django.utils import timezone
-from django.db import transaction
-from apps.base.models import TimeStampModel, UUIDModel
+# from django.utils import timezone
+# from django.db import transaction
+from apps.base.models import TimeStampModel, UUIDModel, SoftDeleteModel
 from django.conf import settings
 
 from apps.listings.utils.choices import Types, ListingStatus
@@ -103,11 +103,11 @@ class CityDistrict(models.Model):
         return f'{_('District name')}: {self.name}'
 
 
-class Listing(UUIDModel, TimeStampModel):
+class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
     """Объявление владельца с типом жилья, тарифом и статусом активности."""
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL
-                             , on_delete=models.CASCADE
+                             , on_delete=models.PROTECT
                              , related_name='listings')
     title = models.CharField(max_length=254, verbose_name=_('Title'))
     description = models.TextField(blank=True, validators=[MaxLengthValidator(5000)], verbose_name=_("Description"))
@@ -248,24 +248,23 @@ class Listing(UUIDModel, TimeStampModel):
         if errors:
             raise ValidationError(errors)
 
-
-    def soft_delete(self):
-        """Деактивировать объявление и сохранить время его мягкого удаления."""
-        # подумать: в будущем добавить менеджер, который будет
-        # автоматически исключать мягко удалённые объявления из обычной выдачи.
-        with transaction.atomic():
-            if self.deleted_at is not None: # защита от повторного мягкого удаления
-                return
-            now = timezone.now()
-
-            self.status = ListingStatus.PAUSED
-            self.deleted_at = now
-
-            self.save(update_fields=[
-                'status',
-                'deleted_at',
-                'updated_at'
-            ])
+    #
+    # def soft_delete(self):
+    #     """Деактивировать объявление и сохранить время его мягкого удаления."""
+    #     # подумать: в будущем добавить менеджер, который будет
+    #     # автоматически исключать мягко удалённые объявления из обычной выдачи.
+    #     with transaction.atomic():
+    #         if self.deleted_at is not None: # защита от повторного мягкого удаления
+    #             return
+    #
+    #         self.status = ListingStatus.PAUSED
+    #         self.deleted_at = timezone.now()
+    #
+    #         self.save(update_fields=[
+    #             'status',
+    #             'deleted_at',
+    #             'updated_at'
+    #         ])
 
     def __str__(self):
         """Вернуть заголовок объявления вместе с его идентификатором."""

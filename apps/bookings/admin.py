@@ -2,11 +2,12 @@
 
 from django.contrib import admin
 from .models import  Booking
+from apps.base.admin import SuperuserDeleteAdminMixin
 
 # Register your models here.
 
 @admin.register(Booking)
-class BookingAdmin(admin.ModelAdmin):
+class BookingAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Показывает даты, стоимость и статус бронирования в админке."""
 
     list_display = ('id', 'user', 'listing', 'start_date', 'end_date',
@@ -26,8 +27,4 @@ class BookingAdmin(admin.ModelAdmin):
     # разрешено ли добавление объектов через стандартную админку.
     def has_add_permission(self, request):
         """Запретить стандартное создание брони через админку."""
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """Сохранить историю бронирований."""
         return False

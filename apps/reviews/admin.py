@@ -3,7 +3,7 @@
 # from itertools import count
 from django.contrib import admin
 from .models import  Review
-
+from apps.base.admin import SuperuserDeleteAdminMixin
 # from django.contrib import messages
 # from django.utils.formats import date_format
 # from django.utils import timezone
@@ -11,7 +11,7 @@ from .models import  Review
 # Register your models here.
 
 @admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
+class ReviewAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Настройки просмотра и поиска отзывов в админке."""
 
     list_display = ('id', 'rating', 'comment')
@@ -19,6 +19,7 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ('booking__user__email', "booking__listing__title", "rating")
     list_filter = ("rating", "booking__status",)
     ordering = ('-rating',)
+
 # Нижеследующие методы убрать, так как зачем нам создавать или менять отзывы через админку.
 #     def formfield_for_foreignkey(self, db_field, request, **kwargs):
 #         """Настроить выбор бронирования, ограничив его бронями текущего пользователя с заданным статусом."""

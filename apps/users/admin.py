@@ -5,6 +5,7 @@ from django.contrib.auth.forms import BaseUserCreationForm, UserChangeForm
 from django.utils import timezone
 
 from .models import User
+from apps.base.admin import SuperuserDeleteAdminMixin
 
 
 class UserAddForm(BaseUserCreationForm):
@@ -28,7 +29,7 @@ class UserEditForm(UserChangeForm):
 
 # Register your models here.
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(SuperuserDeleteAdminMixin, BaseUserAdmin):
     """Админка аккаунтов с входом по email и формами смены пароля."""
 
     add_form = UserAddForm
@@ -75,7 +76,6 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    actions = ("soft_delete",)
 
     def has_add_permission(self, request):
         """Разрешить создание аккаунтов суперпользователям."""
@@ -85,20 +85,5 @@ class UserAdmin(BaseUserAdmin):
         """Разрешить изменение аккаунтов суперпользователям."""
         return request.user.is_superuser
 
-    def has_delete_permission(self, request, obj=None):
-        """Запретить физическое удаление аккаунтов через админку."""
-        return False
-
-    @admin.action(description="Soft-delete selected accounts", permissions=["change"])
-    def soft_delete(self, request, queryset):
-        """Деактивировать аккаунты и установить дату удаления."""
-        now = timezone.now()
-        queryset.filter(
-            deleted_at__isnull=True
-        ).update(
-            is_active=False,
-            deleted_at=timezone.now(),
-            updated_at=now,
-        )
 
 

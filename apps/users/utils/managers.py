@@ -3,7 +3,10 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 
-class UserManager(BaseUserManager):
+from apps.base.managers import SoftDeleteQuerySet
+
+
+class UserManager(BaseUserManager.from_queryset(SoftDeleteQuerySet)):
     """Создание пользователей с нормализацией email и хешированием пароля."""
     # в коде регистрации пользователя использовать этот метод: User.objects.create_user(email=..., password=...)
     def create_user(self, email, password, **extra_fields): # **extra_fields передаёт дополнительные поля:

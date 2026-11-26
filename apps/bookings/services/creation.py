@@ -1,11 +1,12 @@
 """Создание заявки с автоматическим определением результата."""
 
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 
 from apps.bookings.models import Booking
 from apps.listings.models import Listing
-
+from apps.base.deletion import lock_active_user
 from .workflow import save_booking_result
 
 
@@ -25,8 +26,8 @@ def create_booking(
     show_email=True,
 ):
     """Создать заявку и определить результат до первого сохранения."""
-    if not user.is_authenticated or not user.is_active:
-        raise PermissionDenied()
+
+    user = lock_active_user(user=user)
 
     try:
         listing = Listing.objects.select_for_update().get(
@@ -34,7 +35,7 @@ def create_booking(
         )
     except Listing.DoesNotExist:
         raise ValidationError({
-            "listing": "Объявление недоступно.",
+            "listing": _("The listing is unavailable."),
         }) from None
 
     booking = Booking(

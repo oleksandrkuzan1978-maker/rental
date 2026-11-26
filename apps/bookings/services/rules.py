@@ -4,15 +4,22 @@ from apps.bookings.models import Booking
 from apps.listings.utils.choices import ListingStatus
 
 from ..utils.choices import DecisionReason, Status
+from apps.users.models import User
 
 def listing_is_available(listing):
-    """Проверить доступность объявления для бронирования."""
-    return(
+    """Проверить объявление и активность его владельца."""
+    return (
         listing.status == ListingStatus.PUBLISHED
         and listing.deleted_at is None
         and listing.price_per_night is not None
         and listing.max_guests is not None
+        and User.objects.filter(
+            pk=listing.user_id,
+            is_active=True,
+            deleted_at__isnull=True,
+        ).exists()
     )
+
 
 def rejection_reason(listing, booking):
     """Найти причину отказа под блокировкой объявления."""

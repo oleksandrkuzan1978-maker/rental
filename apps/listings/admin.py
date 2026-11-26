@@ -6,10 +6,11 @@ from django.shortcuts import redirect
 
 from .models import  Listing, ListingFile, City
 from .utils.services import save_listing_file
+from apps.base.admin import SuperuserDeleteAdminMixin
 
 # Register your models here.
 @admin.register(Listing)
-class ListingAdmin(admin.ModelAdmin):
+class ListingAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Настройки просмотра и редактирования объявлений в админке."""
 
     list_display = ('id', 'title', "description", "user", 'price_per_night'

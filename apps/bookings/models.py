@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator
 
-from apps.base.models import TimeStampModel, UUIDModel
+from apps.base.models import TimeStampModel, UUIDModel, SoftDeleteModel
 from django.conf import settings
 
 from apps.listings.models import Listing
@@ -13,7 +13,7 @@ from apps.bookings.utils.variables import MAX_BOOKING_EDITS
 # Create your models here.
 
 
-class Booking(UUIDModel, TimeStampModel):
+class Booking(UUIDModel, TimeStampModel, SoftDeleteModel):
     """Заявка арендатора на проживание с датами, стоимостью и статусом."""
 
     Status = Status
@@ -60,6 +60,7 @@ class Booking(UUIDModel, TimeStampModel):
         validators=[MaxValueValidator(MAX_BOOKING_EDITS)],
         verbose_name=_("Number of edits"),
     )
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
 
     class Meta:

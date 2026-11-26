@@ -3,6 +3,7 @@
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from ..utils.choices import DecisionReason, Status
 from .rules import rejection_reason
@@ -11,6 +12,7 @@ from .state import (
     reject_overlapping_requests,
     set_decision,
 )
+from apps.base.deletion import lock_active_user
 
 # Здесь собраны операции над уже созданной заявкой.
 # Обработка дедлайна использует те же блокировки
@@ -24,7 +26,16 @@ def decide_booking(
     listing_id=None,
 ):
     """Применить решение владельца с проверкой срока и доступности."""
+
+    user = lock_active_user(user=user)
+
     listing, booking = lock_booking(booking_id, listing_id)
+
+    if listing.user_id != user.pk:
+        raise PermissionDenied()
+
+    if booking.deleted_at is not None:
+        raise ValidationError(_("A deleted request cannot be considered."))
 
     if (
         not user.is_authenticated
@@ -43,7 +54,7 @@ def decide_booking(
 
     if booking.status != Status.PENDING:
         raise ValidationError(
-            "Заявка уже обработана. Обновите её состояние."
+            _("The request has already been processed. Please update its status.")
         )
 
     now = timezone.now()

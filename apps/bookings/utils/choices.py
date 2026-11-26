@@ -24,3 +24,7 @@ class DecisionReason(models.TextChoices):
     LISTING_UNAVAILABLE = "listing_unavailable", _("Listing is unavailable")
     OWNER_REJECTED = "owner_rejected", _("Rejected by the owner")
     REVIEW_TIMEOUT = "review_timeout", _("Owner response deadline expired")
+
+    USER_CANCELLED = "user_cancelled", _("Cancelled by the tenant")
+
+    ACCOUNT_DELETED = "account_deleted", _("Cancelled because an account was deleted")

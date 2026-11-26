@@ -5,13 +5,13 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from apps.base.models import TimeStampModel, UUIDModel
+from apps.base.models import TimeStampModel, UUIDModel, SoftDeleteModel
 
 from apps.bookings.models import Booking
 # Create your models here.
 
 
-class Review(UUIDModel, TimeStampModel): # Подумать: может поменять на TimeStampMod
+class Review(UUIDModel, TimeStampModel, SoftDeleteModel):
     """Отзыв арендатора с оценкой и необязательным комментарием."""
 
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE
@@ -21,6 +21,7 @@ class Review(UUIDModel, TimeStampModel): # Подумать: может поме
                                               , verbose_name=_('Rating'))
     comment = models.TextField(blank=True, validators=[MaxLengthValidator(5000)]
                                , verbose_name=_('Comment'))
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         """Настройки таблицы, сортировки и ограничения оценки от 1 до 5."""

@@ -38,11 +38,13 @@ class ListingDetailView(RetrieveAPIView):
     permission_classes = [AllowAny]
 
     queryset = (
-        Listing.objects
+        Listing.objects.active()
         .filter(
             status=ListingStatus.PUBLISHED,
-            deleted_at__isnull=True,
+            user__is_active=True,
+            user__deleted_at__isnull=True,
         )
         .select_related("user")
     )
+
 

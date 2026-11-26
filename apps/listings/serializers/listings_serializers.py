@@ -1,4 +1,4 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -6,6 +6,8 @@ from rest_framework import serializers
 
 from ..models import Listing, ListingFile
 from apps.base.serializers import ContactModelSerializer
+from apps.base.deletion import lock_active_user
+from apps.users.models import User
 
 
 class ListingFileSerializer(serializers.ModelSerializer):
@@ -47,17 +49,44 @@ class ListingSerializer(ContactModelSerializer):
     # переопределение create и update нужно для вызова full_clean,
     # чтобы перед каждым сохранением объявления выполнялись проверки из Listing.clean()
     # (обычный save() автоматически эти проверки не запускает)
+
+    @transaction.atomic
     def _save_listing(self, listing_obj):
-        """Проверить модель и сохранить объявление."""
+        """Проверить владельца и состояние объявления перед сохранением."""
+        owner = User.objects.get(pk=listing_obj.user_id)
+
+        lock_active_user(user=owner)
+        # listing_obj._state.adding — служебный признак Django:
+        # - True — объект считается новым и ещё не сохранённым;
+        # - False — объект получен из базы или уже был сохранён.
+        if not listing_obj._state.adding: # «Если мы редактируем существующее объявление».??? Может, убрать
+            # заново получаем объявление из базы. За прошедшее время другой запрос мог мягко удалить объявление.
+            current = Listing.objects.select_for_update().get(
+                pk=listing_obj.pk,
+            )
+
+            if current.deleted_at is not None:
+                raise serializers.ValidationError(
+                    _("Удалённое объявление нельзя редактировать.")
+                )
+
         try:
             listing_obj.full_clean()
             listing_obj.save()
+
         except DjangoValidationError as error:
-            raise serializers.ValidationError(error.message_dict) from error
+            raise serializers.ValidationError(
+                error.message_dict
+            ) from error
+
         except IntegrityError as error:
             if "unique_address" not in str(error):
                 raise
-            raise serializers.ValidationError({"non_field_errors":
-                                                _("An ad with this address already exists.")}) from error
+
+            raise serializers.ValidationError({
+                "non_field_errors": _(
+                    "An ad with this address already exists."
+                ),
+            }) from error
 
         return listing_obj

@@ -39,6 +39,7 @@ def schedule_status_email(sender, instance, created, using, raw=False, **kwargs)
         Status.PENDING,
         Status.CONFIRMED,
         Status.REJECTED,
+        Status.CANCELLED,
     ):
         return
 

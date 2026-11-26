@@ -10,11 +10,20 @@ from ..utils.variables import (
 )
 from .state import lock_booking
 from .workflow import save_booking_result
-
+from apps.base.deletion import lock_active_user
 
 @transaction.atomic
 def update_booking(*, user, booking_id, changes):
+
+    user = lock_active_user(user=user)
+
     listing, booking = lock_booking(booking_id)
+
+    if booking.user_id != user.pk:
+        raise PermissionDenied()
+
+    if booking.deleted_at is not None:
+        raise ValidationError(_("Deleted booking cannot be modified"))
 
     if (
         not user.is_authenticated

@@ -8,9 +8,11 @@ from .models import ListingView, SearchHistory
 # from django.utils import timezone
 
 # Register your models here.
+from apps.base.admin import SuperuserDeleteAdminMixin
+
 
 @admin.register(ListingView)
-class ListingViewAdmin(admin.ModelAdmin):
+class ListingViewAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Настройки поиска и фильтрации просмотров в админке."""
 
     list_display = ('id', 'listing', 'created_at')
@@ -21,7 +23,7 @@ class ListingViewAdmin(admin.ModelAdmin):
 
 
 @admin.register(SearchHistory)
-class SearchHistoryAdmin(admin.ModelAdmin):
+class SearchHistoryAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Настройки просмотра истории поиска в админке."""
 
     list_display = ('id', 'user', 'query', 'created_at')

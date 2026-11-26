@@ -8,7 +8,7 @@ def delete(self, using=None, keep_parents=False):
     self.is_deleted = True
     self.deleted_at = timezone.now()
     self.save(using=using
-              , update_fields=["is_deleted", "deleted_at"]
+              , update_fields=["deleted_at"]
               )
     return 1, {"number of soft-deleted records": 1}
 
@@ -17,7 +17,7 @@ def restore(self, using=None):
     """Восстановление одного объекта."""
     self.is_deleted = False
     self.deleted_at = None
-    self.save(using=using, update_fields=["is_deleted", "deleted_at"])
+    self.save(using=using, update_fields=["deleted_at"])
 
 
 def full_delete(self, using=None, keep_parents=False):

@@ -4,11 +4,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import PermissionsMixin
 from apps.users.utils.managers import UserManager
-from apps.base.models import TimeStampModel, UUIDModel
+from apps.base.models import TimeStampModel, UUIDModel, SoftDeleteModel
 from .utils.validators import phone_validator
 
 
-class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel):
+class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel, SoftDeleteModel,):
     """Аккаунт с входом по email, контактными данными и правами Django."""
     name = models.CharField(_("name"), max_length=40)
     email = models.EmailField(_("email address"), max_length=150, unique=True)
