@@ -25,7 +25,7 @@ class ListingAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(ListingFile)
-class ListingFileAdmin(admin.ModelAdmin):
+class ListingFileAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     """Управление вложениями с проверкой лимита файлов объявления."""
 
     list_display = ("id", "title", "listing", "file")
@@ -34,10 +34,11 @@ class ListingFileAdmin(admin.ModelAdmin):
     ordering = ("title", "-created_at")
 
     def get_readonly_fields(self, request, obj=None):
-        """Закрепить существующее вложение за его объявлением."""
+        """Запретить ручное изменение даты удаления и связи вложения."""
         if obj is not None:
-            return ("listing",)
-        return ()
+            return ("listing", "deleted_at")
+
+        return ("deleted_at",)
 
     def save_model(self, request, obj, form, change):
         """Сохранить вложение через общий сервис."""

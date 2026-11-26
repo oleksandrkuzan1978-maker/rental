@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from apps.bookings.models import Booking
 from apps.bookings.utils.choices import DecisionReason, Status
-from apps.listings.models import Listing
+from apps.listings.models import Listing, ListingFile
 from apps.listings.utils.choices import ListingStatus
 from apps.reviews.models import Review
 from apps.users.models import User
@@ -63,6 +63,12 @@ def _mark_deleted(obj, *, now):
         fields.append("status")
 
     obj.save(update_fields=fields)
+
+    if isinstance(obj, Listing):
+        obj.files.active().update(
+            deleted_at=now,
+            updated_at=now,
+        )
 
 
 def _cancel_booking(booking, *, reason, now):
@@ -191,6 +197,31 @@ def soft_delete_object(*, obj, actor):
             )
 
         _mark_deleted(listing, now=now)
+
+
+    elif isinstance(obj, ListingFile):
+        reference = ListingFile.objects.only("listing_id").get(
+            pk=obj.pk,
+        )
+
+        listing = Listing.objects.select_for_update().get(
+            pk=reference.listing_id,
+        )
+        attachment = ListingFile.objects.select_for_update().get(
+            pk=obj.pk,
+            listing_id=listing.pk,
+        )
+
+        if listing.user_id != actor.pk:
+            raise PermissionDenied(
+                _("This file belongs to another user's listing.")
+            )
+
+        if attachment.deleted_at is not None:
+            return 0, {}
+
+        _mark_deleted(attachment, now=timezone.now())
+
 
     elif isinstance(obj, Booking):
         # Локальный импорт предотвращает циклический импорт сервисов.

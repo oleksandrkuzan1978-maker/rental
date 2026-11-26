@@ -37,6 +37,12 @@ def save_booking_result(listing, booking):
     reason = rejection_reason(listing, booking)
     now = timezone.now()
 
+    # сохранение прежнего дедлайна
+    previous_deadline = (
+        booking.review_deadline
+        if booking.status == Status.PENDING
+        else None
+    )
     booking.decision_reason = reason
     booking.decided_at = None
     booking.review_deadline = None
@@ -50,7 +56,9 @@ def save_booking_result(listing, booking):
         or not listing.instant_booking_enabled
     ):
         booking.status = Status.PENDING
-        booking.review_deadline = now + OWNER_REVIEW_TIMEOUT
+        booking.review_deadline = (
+            previous_deadline or now + OWNER_REVIEW_TIMEOUT
+        )
 
     else:
         booking.status = Status.CONFIRMED

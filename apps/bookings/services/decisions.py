@@ -132,3 +132,60 @@ def expire_booking(*, booking_id):
         )
 
     return booking
+
+@transaction.atomic
+def complete_booking(*, booking_id, user=None):
+    """Завершить бронь автоматически по сроку или вручную владельцем.
+
+    При переданном user проверить владельца и разрешить досрочное
+    завершение. Без user завершать только после времени выезда.
+    """
+    if user is not None:
+        user = lock_active_user(user=user)
+
+    listing, booking = lock_booking(booking_id)
+
+    if user is not None and listing.user_id != user.pk:
+        raise PermissionDenied(
+            _("Only the listing owner can complete this booking.")
+        )
+
+    # Повторное завершение не меняет дату принятого решения.
+    if booking.status == Status.COMPLETED:
+        return booking
+
+    if booking.status != Status.CONFIRMED:
+        if user is not None:
+            raise ValidationError(
+                _("Only confirmed bookings can be completed.")
+            )
+
+        return booking
+
+    now = timezone.now()
+
+    if user is None:
+        local_now = timezone.localtime(
+            now,
+            timezone.get_default_timezone(),
+        )
+
+        if (
+            booking.end_date,
+            listing.check_out_time,
+        ) > (
+            local_now.date(),
+            local_now.time(),
+        ):
+            return booking
+
+    booking.status = Status.COMPLETED
+    booking.decided_at = now
+
+    booking.save(update_fields=[
+        "status",
+        "decided_at",
+        "updated_at",
+    ])
+
+    return booking

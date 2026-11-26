@@ -22,7 +22,18 @@ class ListingFileSerializer(serializers.ModelSerializer):
 
 class ListingSerializer(ContactModelSerializer):
     """Сериализатор объявлений со списком прикреплённых файлов."""
-    files = ListingFileSerializer(many=True, read_only=True)
+    files = serializers.SerializerMethodField()
+
+    def get_files(self, obj):
+        """Вернуть неудалённые вложения неудалённого объявления."""
+        if obj.deleted_at is not None:
+            return []
+
+        return ListingFileSerializer(
+            obj.files.active(),
+            many=True,
+            context=self.context,
+        ).data
 
     class Meta:
         """Модель и поля объявления в API."""

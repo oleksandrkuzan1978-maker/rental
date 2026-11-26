@@ -2,6 +2,7 @@
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from ..utils.choices import Status
 from ..utils.variables import (
@@ -37,10 +38,22 @@ def update_booking(*, user, booking_id, changes):
             _("Completed bookings cannot be modified.")
         )
 
-    if booking.status != Status.REJECTED:
+    if booking.status not in (Status.PENDING, Status.REJECTED):
         raise ValidationError(
-            _("Only rejected booking requests can be modified.")
+            _("Only pending or rejected booking requests can be modified.")
         )
+
+    if booking.status == Status.PENDING and (
+        booking.review_deadline is None
+        or booking.review_deadline <= timezone.now()
+    ):
+        raise ValidationError(
+            _(
+                "The review period has expired. "
+                "The request can no longer be modified."
+            )
+        )
+
 
     if set(changes) - set(EDITABLE_BOOKING_FIELDS):
         raise ValidationError(

@@ -271,7 +271,7 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
         return f"Listing: '{self.title}', ({self.pk})"
 
 
-class ListingFile(UUIDModel, TimeStampModel):
+class ListingFile(UUIDModel, TimeStampModel, SoftDeleteModel):
     """Вложение объявления с названием и путём к файлу в хранилище."""
 
     title = models.CharField(max_length=120, verbose_name=_("Title of the file"))
@@ -282,6 +282,7 @@ class ListingFile(UUIDModel, TimeStampModel):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE
                                 , related_name="files"
                                 , verbose_name=_("Listing"))
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         """Настройки таблицы и порядка выдачи вложений."""

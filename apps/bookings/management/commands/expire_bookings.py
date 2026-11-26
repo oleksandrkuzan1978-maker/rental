@@ -4,7 +4,7 @@ from django.db import DatabaseError
 from django.utils import timezone
 
 from apps.bookings.models import Booking
-from apps.bookings.services import expire_booking
+from apps.bookings.services import expire_booking, complete_booking
 from apps.bookings.utils.choices import Status
 from apps.bookings.utils.variables import MAINTENANCE_BATCH_SIZE
 
@@ -38,6 +38,32 @@ class Command(BaseCommand):
             except DatabaseError as error:
                 errors += 1
                 self.stderr.write(f"Failed to process booking {booking_id}: {error}")
+        today = timezone.localdate(
+            timezone.now(),
+            timezone.get_default_timezone(),
+        )
+
+        completed_candidates = list(
+            Booking.objects.filter(
+                status=Status.CONFIRMED,
+                end_date__lte=today,
+            )
+            .order_by("end_date", "listing__check_out_time", "pk")
+            .values_list("pk", flat=True)[:MAINTENANCE_BATCH_SIZE]
+        )
+
+        for booking_id in completed_candidates:
+            try:
+                complete_booking(booking_id=booking_id)
+
+            except Booking.DoesNotExist:
+                continue
+
+            except DatabaseError as error:
+                errors += 1
+                self.stderr.write(
+                    f"Failed to complete booking {booking_id}: {error}"
+                )
 
         if errors:
             raise CommandError(f"Unprocessed requests: {errors}. "
