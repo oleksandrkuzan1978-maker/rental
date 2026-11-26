@@ -20,6 +20,7 @@ from apps.listings.utils.validators import (
 from .utils.variables import (
     DEFAULT_CHECK_IN_TIME,
     DEFAULT_CHECK_OUT_TIME,
+    MIN_PRICE_PER_NIGHT,
     MAX_ROOMS,
 )
 
@@ -114,7 +115,7 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
     price_per_night = models.DecimalField(max_digits=10
                                           , decimal_places=2
                                           , blank=True, null=True
-                                          , validators=[MinValueValidator(0)]
+                                          , validators=[MinValueValidator(MIN_PRICE_PER_NIGHT)]
                                           , verbose_name=_("Price per night"))
     rooms = models.DecimalField(max_digits=4, decimal_places=1
                                 , null=True, blank=True
@@ -185,9 +186,9 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
             models.CheckConstraint(
                 condition=(
                         models.Q(price_per_night__isnull=True)
-                        | models.Q(price_per_night__gte=0)
+                        | models.Q(price_per_night__gte=MIN_PRICE_PER_NIGHT)
                 ),
-                name="property_price_positive_or_null",
+                name="property_min_price_or_null",
             ),
             models.CheckConstraint(
                 condition=(
