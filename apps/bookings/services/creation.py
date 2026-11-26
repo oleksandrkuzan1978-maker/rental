@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.bookings.models import Booking
 from apps.listings.models import Listing
-from apps.base.deletion import lock_active_user
+from apps.base.services.deletion import lock_active_user
 from .workflow import save_booking_result
 
 

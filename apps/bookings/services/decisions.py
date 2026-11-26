@@ -12,7 +12,7 @@ from .state import (
     reject_overlapping_requests,
     set_decision,
 )
-from apps.base.deletion import lock_active_user
+from apps.base.services.deletion import lock_active_user
 
 # Здесь собраны операции над уже созданной заявкой.
 # Обработка дедлайна использует те же блокировки

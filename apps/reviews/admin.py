@@ -20,6 +20,10 @@ class ReviewAdmin(SuperuserDeleteAdminMixin, admin.ModelAdmin):
     list_filter = ("rating", "booking__status",)
     ordering = ('-rating',)
 
+    def has_add_permission(self, request):
+        """Запретить создание отзывов через административную панель."""
+        return False
+
 # Нижеследующие методы убрать, так как зачем нам создавать или менять отзывы через админку.
 #     def formfield_for_foreignkey(self, db_field, request, **kwargs):
 #         """Настроить выбор бронирования, ограничив его бронями текущего пользователя с заданным статусом."""
