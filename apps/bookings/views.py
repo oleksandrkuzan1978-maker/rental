@@ -38,7 +38,7 @@ class BookingDetailView(RetrieveAPIView):
     def get_queryset(self):
         """Доступ к заявке на бронь разрешён, если пользователь
         является арендатором заявки либо владельцем объявления"""
-        return (Booking.objects.all().select_related('user', "listing__user")
+        return (Booking.objects.all().select_related('user')
                 .filter(Q(user=self.request.user)
                         | Q(listing__user=self.request.user)))
 

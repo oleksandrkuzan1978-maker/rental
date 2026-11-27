@@ -7,7 +7,6 @@ from rest_framework import serializers
 from ..models import Listing, ListingFile
 from apps.base.serializers import ContactModelSerializer
 from apps.base.services.deletion import lock_active_user
-from apps.users.models import User
 
 
 class ListingFileSerializer(serializers.ModelSerializer):
@@ -39,7 +38,7 @@ class ListingListSerializer(serializers.ModelSerializer):
         """Поля карточки, предназначенные для чтения."""
 
         model = Listing
-        fields = ("id", "title", "city", "city_name",
+        fields = ("id", "title", "city", "city_name", "status",
                   "city_district", "district_name", "property_type", "price_per_night",
                   "rooms", "max_guests", "instant_booking_enabled", "files",
         )
@@ -90,9 +89,7 @@ class ListingSerializer(ContactModelSerializer):
     @transaction.atomic
     def _save_listing(self, listing_obj):
         """Проверить владельца и состояние объявления перед сохранением."""
-        owner = User.all_objects.get(pk=listing_obj.user_id)
-
-        lock_active_user(user=owner)
+        listing_obj.user = lock_active_user(user=listing_obj.user)
         # listing_obj._state.adding — служебный признак Django:
         # - True — объект считается новым и ещё не сохранённым;
         # - False — объект получен из базы или уже был сохранён.

@@ -14,7 +14,7 @@ from .utils.notifications import send_booking_emails
 def remember_status(sender, instance, using, raw=False, update_fields=None, **kwargs):
     """Определить, изменяется ли статус перед сохранением."""
     instance._email_status_changed = False
-    if raw:
+    if raw or instance._state.adding:
         return
     if update_fields is not None and "status" not in update_fields:
         return
