@@ -6,7 +6,7 @@ from django.conf import settings
 
 from apps.listings.models import Listing
 from apps.base.managers import DeleteQuerySet
-from apps.base.models import TimeStampModel, UUIDModel, ProtectedDeleteModel
+from apps.base.models import UUIDModel, ProtectedDeleteModel
 # Create your models here.
 
 class ListingView(UUIDModel, ProtectedDeleteModel):

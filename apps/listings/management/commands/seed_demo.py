@@ -4,7 +4,7 @@
 """
 
 from base64 import b64decode
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from secrets import token_urlsafe
 
@@ -59,7 +59,7 @@ class Command(BaseCommand):
         В saved_files добавить пары из хранилища и пути, чтобы вызывающий
         метод мог удалить созданные файлы при откате.
         """
-        if User.objects.filter(email__in=(LANDLORD_EMAIL, TENANT_EMAIL)).exists():
+        if User.all_objects.filter(email__in=(LANDLORD_EMAIL, TENANT_EMAIL)).exists():
             raise CommandError("Demo accounts already exist. No new data was created.")
 
         cities = City.objects.in_bulk(("11000000", "05913000"), field_name="ags")
@@ -119,6 +119,10 @@ class Command(BaseCommand):
             end_date=end_date,
             total_price=berlin.price_per_night * (end_date - start_date).days,
             status=Booking.Status.COMPLETED,
+            decided_at=timezone.make_aware(
+                datetime.combine(end_date, berlin.check_out_time),
+                timezone.get_default_timezone(),
+            ),
         )
         past.full_clean()
         past.save(force_insert=True)

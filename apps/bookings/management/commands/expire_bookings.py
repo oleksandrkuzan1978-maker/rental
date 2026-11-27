@@ -17,7 +17,7 @@ class Command(BaseCommand):
         """Выбрать просроченные заявки и обработать каждую отдельно."""
 
         booking_ids = list(
-            Booking.objects.filter(
+            Booking.all_objects.filter(
                 status=Status.PENDING,
                 review_deadline__lte=timezone.now(),
             )
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         )
 
         completed_candidates = list(
-            Booking.objects.filter(
+            Booking.all_objects.filter(
                 status=Status.CONFIRMED,
                 end_date__lte=today,
             )

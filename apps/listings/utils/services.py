@@ -10,7 +10,7 @@ from .variables import MAX_FILES_PER_LISTING
 @transaction.atomic
 def save_listing_file(*, attachment):
     """Сохранить неудалённое вложение с проверкой состояния и лимита."""
-    listing = Listing.objects.select_for_update().get(
+    listing = Listing.all_objects.select_for_update().get(
         pk=attachment.listing_id,
     )
 
@@ -25,7 +25,7 @@ def save_listing_file(*, attachment):
         )
 
     if not attachment._state.adding:
-        current = ListingFile.objects.select_for_update().get(
+        current = ListingFile.all_objects.select_for_update().get(
             pk=attachment.pk,
             listing_id=listing.pk,
         )
@@ -35,7 +35,7 @@ def save_listing_file(*, attachment):
                 _("A deleted file cannot be modified.")
             )
 
-    other_files = listing.files.active().exclude(
+    other_files = ListingFile.objects.filter(listing=listing).exclude(
         pk=attachment.pk,
     )
 

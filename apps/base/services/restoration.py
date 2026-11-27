@@ -42,7 +42,7 @@ def restore_object(*, obj, actor):
     if isinstance(obj, User):
         require_superuser(actor)
 
-        current = User.objects.select_for_update().get(pk=obj.pk)
+        current = User.all_objects.select_for_update().get(pk=obj.pk)
 
         if current.deleted_at is None:
             return current
@@ -51,7 +51,7 @@ def restore_object(*, obj, actor):
         fields.append("is_active")
 
     elif isinstance(obj, Listing):
-        current = Listing.objects.select_for_update().get(pk=obj.pk)
+        current = Listing.all_objects.select_for_update().get(pk=obj.pk)
 
         if current.user_id != actor.pk:
             raise PermissionDenied(
@@ -63,13 +63,14 @@ def restore_object(*, obj, actor):
 
         # Выбираем вложения, удалённые вместе с объявлением.
         attachments = list(
-            current.files.select_for_update()
+            ListingFile.deleted_objects.select_for_update()
+            .filter(listing=current)
             .filter(deleted_at=current.deleted_at)
             .order_by("pk")
         )
 
         if (
-            current.files.active().count() + len(attachments)
+            ListingFile.objects.filter(listing=current).count() + len(attachments)
             > MAX_FILES_PER_LISTING
         ):
             raise ValidationError(
@@ -79,7 +80,7 @@ def restore_object(*, obj, actor):
         for attachment in attachments:
             _check_file(attachment)
 
-        current.files.filter(
+        ListingFile.deleted_objects.filter(listing=current).filter(
             pk__in=[item.pk for item in attachments],
         ).update(
             deleted_at=None,
@@ -90,14 +91,14 @@ def restore_object(*, obj, actor):
         fields.append("status")
 
     elif isinstance(obj, ListingFile):
-        reference = ListingFile.objects.only("listing_id").get(
+        reference = ListingFile.all_objects.only("listing_id").get(
             pk=obj.pk,
         )
 
-        listing = Listing.objects.select_for_update().get(
+        listing = Listing.all_objects.select_for_update().get(
             pk=reference.listing_id,
         )
-        current = ListingFile.objects.select_for_update().get(
+        current = ListingFile.all_objects.select_for_update().get(
             pk=obj.pk,
             listing_id=listing.pk,
         )
@@ -115,7 +116,7 @@ def restore_object(*, obj, actor):
                 _("Restore the listing before restoring its files.")
             )
 
-        if listing.files.active().count() >= MAX_FILES_PER_LISTING:
+        if ListingFile.objects.filter(listing=listing).count() >= MAX_FILES_PER_LISTING:
             raise ValidationError(
                 _("The attachment limit has been reached.")
             )
@@ -146,14 +147,14 @@ def restore_object(*, obj, actor):
             )
 
     elif isinstance(obj, Review):
-        reference = Review.objects.only("booking_id").get(
+        reference = Review.all_objects.only("booking_id").get(
             pk=obj.pk,
         )
 
-        booking = Booking.objects.select_for_update().get(
+        booking = Booking.all_objects.select_for_update().get(
             pk=reference.booking_id,
         )
-        current = Review.objects.select_for_update().get(
+        current = Review.all_objects.select_for_update().get(
             pk=obj.pk,
             booking_id=booking.pk,
         )

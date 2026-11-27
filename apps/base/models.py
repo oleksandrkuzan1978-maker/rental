@@ -2,7 +2,7 @@
 from django.db import models
 import uuid
 
-from .managers import SoftDeleteManager
+from .managers import AllObjectsManager, DeletedObjectsManager, ActiveObjectsManager
 
 class UUIDModel(models.Model):
     """Абстрактная модель с автоматически создаваемым UUID."""
@@ -58,10 +58,17 @@ class SoftDeleteModel(ProtectedDeleteModel):
 
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    objects = SoftDeleteManager()
+    objects = ActiveObjectsManager()
+    all_objects = AllObjectsManager()
+    deleted_objects = DeletedObjectsManager()
 
     class Meta:
         abstract = True
+        base_manager_name = "all_objects" # Позволяет Django получать связанные записи, даже если они удалены. Например,
+                                            # историческая бронь должна продолжать иметь доступ
+                                            # к своему удалённому объявлению.
+        default_manager_name = "all_objects" # сохраняет полную видимость записей для стандартных проверок уникальности,
+                                             # административной панели и других механизмов Django.
 
     def delete(self, using=None, keep_parents=False, *, actor=None):
         """Мягко удалить объект от имени переданного пользователя."""

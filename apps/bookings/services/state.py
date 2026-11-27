@@ -21,7 +21,7 @@ def reject_overlapping_requests(booking, *, now):
     """Отклонить ожидающие заявки на даты подтверждённой брони."""
     # reject_overlapping_requests() освобождает систему
     # от конфликтующих ожидающих заявок после подтверждения.
-    waiting = (Booking.objects.select_for_update()
+    waiting = (Booking.all_objects.select_for_update()
                .filter(listing_id=booking.listing_id,
                         status=Status.PENDING,
                         start_date__lt=booking.end_date,
@@ -48,15 +48,15 @@ def reject_overlapping_requests(booking, *, now):
 def lock_booking(booking_id, listing_id=None):
     """Заблокировать объявление, затем бронь в едином порядке."""
     # lock_booking() обеспечивает единый порядок блокировок.
-    reference = Booking.objects.only("listing_id").get(pk=booking_id)
+    reference = Booking.all_objects.only("listing_id").get(pk=booking_id)
 
     if (listing_id is not None
             and reference.listing_id != listing_id):
         raise Booking.DoesNotExist()
 
-    listing = Listing.objects.select_for_update().get(pk=reference.listing_id)
+    listing = Listing.all_objects.select_for_update().get(pk=reference.listing_id)
 
-    booking = Booking.objects.select_for_update().get(pk=booking_id, listing_id=listing.pk,)
+    booking = Booking.all_objects.select_for_update().get(pk=booking_id, listing_id=listing.pk,)
 
     return listing, booking
 

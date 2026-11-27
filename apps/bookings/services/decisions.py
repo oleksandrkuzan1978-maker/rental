@@ -37,13 +37,6 @@ def decide_booking(
     if booking.deleted_at is not None:
         raise ValidationError(_("A deleted request cannot be considered."))
 
-    if (
-        not user.is_authenticated
-        or not user.is_active
-        or listing.user_id != user.pk
-    ):
-        raise PermissionDenied()
-
     expected_status = (
         Status.CONFIRMED if approve else Status.REJECTED
     )

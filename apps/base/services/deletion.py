@@ -19,7 +19,7 @@ def require_superuser(actor):
     if (
         actor is None
         or not actor.is_authenticated
-        or not User.objects.filter(
+        or not User.all_objects.filter(
             pk=actor.pk,
             is_active=True,
             is_superuser=True,
@@ -37,7 +37,7 @@ def lock_active_user(*, user):
         raise PermissionDenied(_("You must be logged in."))
 
     try:
-        return User.objects.select_for_update().get(
+        return User.all_objects.select_for_update().get(
             pk=user.pk,
             is_active=True,
             deleted_at__isnull=True,
@@ -65,7 +65,7 @@ def _mark_deleted(obj, *, now):
     obj.save(update_fields=fields)
 
     if isinstance(obj, Listing):
-        obj.files.active().update(
+        ListingFile.objects.filter(listing=obj).update(
             deleted_at=now,
             updated_at=now,
         )
@@ -92,25 +92,25 @@ def _cancel_booking(booking, *, reason, now):
 def _delete_account(user, *, now):
     """Удалить аккаунт и собственные записи при отсутствии CONFIRMED."""
     owned_ids = set(
-        Listing.objects.filter(user_id=user.pk)
+        Listing.all_objects.filter(user_id=user.pk)
         .values_list("pk", flat=True)
     )
 
     tenant_listing_ids = set(
-        Booking.objects.filter(user_id=user.pk)
+        Booking.all_objects.filter(user_id=user.pk)
         .values_list("listing_id", flat=True)
     )
 
     # Сначала блокируем объявления в едином порядке.
     listings = list(
-        Listing.objects.select_for_update()
+        Listing.all_objects.select_for_update()
         .filter(pk__in=owned_ids | tenant_listing_ids)
         .order_by("pk")
     )
 
     # Затем блокируем собственные брони и брони своих объявлений.
     bookings = list(
-        Booking.objects.select_for_update()
+        Booking.all_objects.select_for_update()
         .filter(
             Q(user_id=user.pk)
             | Q(listing_id__in=owned_ids)
@@ -138,7 +138,7 @@ def _delete_account(user, *, now):
             _mark_deleted(booking, now=now)
 
     reviews = (
-        Review.objects.select_for_update()
+        Review.all_objects.select_for_update()
         .filter(booking__user_id=user.pk)
         .order_by("pk")
     )
@@ -165,7 +165,7 @@ def soft_delete_object(*, obj, actor):
         _delete_account(actor, now=timezone.now())
 
     elif isinstance(obj, Listing):
-        listing = Listing.objects.select_for_update().get(pk=obj.pk)
+        listing = Listing.all_objects.select_for_update().get(pk=obj.pk)
 
         if listing.user_id != actor.pk:
             raise PermissionDenied(_("This listing belongs to another user."))
@@ -173,7 +173,7 @@ def soft_delete_object(*, obj, actor):
         if listing.deleted_at is not None:
             return 0, {}
 
-        if Booking.objects.filter(
+        if Booking.all_objects.filter(
             listing_id=listing.pk,
             status=Status.CONFIRMED,
         ).exists():
@@ -184,7 +184,7 @@ def soft_delete_object(*, obj, actor):
         now = timezone.now()
 
         waiting = (
-            Booking.objects.select_for_update()
+            Booking.all_objects.select_for_update()
             .filter(listing_id=listing.pk, status=Status.PENDING)
             .order_by("pk")
         )
@@ -200,14 +200,14 @@ def soft_delete_object(*, obj, actor):
 
 
     elif isinstance(obj, ListingFile):
-        reference = ListingFile.objects.only("listing_id").get(
+        reference = ListingFile.all_objects.only("listing_id").get(
             pk=obj.pk,
         )
 
-        listing = Listing.objects.select_for_update().get(
+        listing = Listing.all_objects.select_for_update().get(
             pk=reference.listing_id,
         )
-        attachment = ListingFile.objects.select_for_update().get(
+        attachment = ListingFile.all_objects.select_for_update().get(
             pk=obj.pk,
             listing_id=listing.pk,
         )
@@ -257,7 +257,7 @@ def soft_delete_object(*, obj, actor):
         _mark_deleted(booking, now=now)
 
     elif isinstance(obj, Review):
-        review = Review.objects.select_for_update().get(pk=obj.pk)
+        review = Review.all_objects.select_for_update().get(pk=obj.pk)
 
         if review.booking.user_id != actor.pk:
             raise PermissionDenied(_("This review belongs to another user."))

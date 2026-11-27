@@ -1,14 +1,11 @@
-from django.db import transaction
-from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework.serializers import as_serializer_error
 
 from apps.base.serializers import ContactModelSerializer
 from .models import Booking
-from .services import create_booking, lock_booking, update_booking
-from .utils.choices import Status
-from .utils.variables import EDITABLE_BOOKING_FIELDS, OWNER_REVIEW_TIMEOUT
+from .services import create_booking, update_booking
+from .utils.variables import EDITABLE_BOOKING_FIELDS
 
 
 class BookingSerializer(ContactModelSerializer):

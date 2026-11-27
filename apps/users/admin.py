@@ -2,7 +2,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import BaseUserCreationForm, UserChangeForm
-from django.utils import timezone
 
 from .models import User
 from apps.base.admin import SuperuserDeleteAdminMixin

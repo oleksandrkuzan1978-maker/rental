@@ -26,13 +26,6 @@ def update_booking(*, user, booking_id, changes):
     if booking.deleted_at is not None:
         raise ValidationError(_("Deleted booking cannot be modified"))
 
-    if (
-        not user.is_authenticated
-        or not user.is_active
-        or booking.user_id != user.pk
-    ):
-        raise PermissionDenied()
-
     if booking.status == Status.COMPLETED:
         raise ValidationError(
             _("Completed bookings cannot be modified.")

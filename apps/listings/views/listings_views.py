@@ -40,7 +40,7 @@ class ListingListCreateView(ListCreateAPIView):
     def get_queryset(self):
         """Получить публичные объявления с подготовленными связями."""
         return (
-            Listing.objects.active()
+            Listing.objects
             .filter(
                 status=ListingStatus.PUBLISHED,
                 user__is_active=True,
@@ -50,7 +50,7 @@ class ListingListCreateView(ListCreateAPIView):
             .prefetch_related(
                 Prefetch(
                     "files",
-                    queryset=ListingFile.objects.active().order_by(
+                    queryset=ListingFile.objects.order_by(
                         "created_at",
                         "pk",
                     ),
@@ -73,9 +73,7 @@ class ListingUpdateView(UpdateAPIView):
     # (только среди неудаленных объявлений пользователя, сделавшего запрос.)
     def get_queryset(self):
         return Listing.objects.filter(
-            user=self.request.user
-            , deleted_at__isnull=True
-        )
+            user=self.request.user)
 
 class ListingDetailView(RetrieveAPIView):
     """Показать посетителю опубликованное неудалённое объявление."""
@@ -84,7 +82,7 @@ class ListingDetailView(RetrieveAPIView):
     permission_classes = [AllowAny]
 
     queryset = (
-        Listing.objects.active()
+        Listing.objects.all()
         .filter(
             status=ListingStatus.PUBLISHED,
             user__is_active=True,

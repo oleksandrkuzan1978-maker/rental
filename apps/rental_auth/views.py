@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView, TokenBlacklistView
 
 from apps.rental_auth.serializers import (UserRegisterSerializer, UserSerializer
-                                        , ChangePasswordSerializer, LoginSerializer)
+                                        , ChangePasswordSerializer, LoginSerializer, RefreshSerializer)
 from .tokens import get_tokens_for_user, blacklist_all_tokens
 
 # Create your views here.
@@ -24,9 +24,9 @@ class AuthThrottleMixin:
 
 
 class RefreshView(AuthThrottleMixin, TokenRefreshView):
-    """Представление для обновления JWT с ограничением частоты запросов."""
+    """Обновление JWT с проверкой доступности аккаунта."""
 
-    pass
+    serializer_class = RefreshSerializer
 
 
 class LogoutAllView(APIView):

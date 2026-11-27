@@ -3,12 +3,12 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import PermissionsMixin
-from apps.users.utils.managers import UserManager
+from apps.users.utils.managers import AllUserManager, UserManager
 from apps.base.models import TimeStampModel, UUIDModel, SoftDeleteModel
 from .utils.validators import phone_validator
 
 
-class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel, SoftDeleteModel,):
+class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel, SoftDeleteModel):
     """Аккаунт с входом по email, контактными данными и правами Django."""
     name = models.CharField(_("name"), max_length=40)
     email = models.EmailField(_("email address"), max_length=150, unique=True)
@@ -18,14 +18,14 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampModel, UUIDModel, SoftDe
     #is_superuser = models.BooleanField(default=False) # Определяет, обладает ли пользователь всеми разрешениями Django.
     #last_login = models.DateTimeField(null=True, blank=True)
     #updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True) # Для мягкого удаления
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"] # "username", "last_name"
 
     objects = UserManager()
+    all_objects = AllUserManager()
 
-    class Meta:
+    class Meta(SoftDeleteModel.Meta):
         """Порядок выдачи аккаунтов и ограничение мягкого удаления."""
 
         db_table = "users"

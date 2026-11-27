@@ -21,14 +21,6 @@ class DeleteQuerySet(models.QuerySet):
 class SoftDeleteQuerySet(DeleteQuerySet):
     """Выборки моделей, поддерживающих мягкое удаление."""
 
-    def active(self):
-        """Вернуть записи без даты удаления."""
-        return self.filter(deleted_at__isnull=True)
-
-    def deleted(self):
-        """Вернуть мягко удалённые записи."""
-        return self.filter(deleted_at__isnull=False)
-
     @transaction.atomic
     def soft_delete(self, *, actor):
         """Удалить записи через общие проверки бизнес-правил."""
@@ -48,15 +40,27 @@ class SoftDeleteQuerySet(DeleteQuerySet):
         """Обычное удаление выборки считать мягким."""
         return self.soft_delete(actor=actor)
 
-    def hard_delete(self, *, actor):
-        """Физически удалить только ранее мягко удалённые записи."""
-        return self.deleted().full_delete(actor=actor)
+
+class AllObjectsManager(models.Manager.from_queryset(SoftDeleteQuerySet)):
+    """Все записи, включая мягко удалённые."""
 
 
-class SoftDeleteManager(models.Manager.from_queryset(SoftDeleteQuerySet)):
-    """Менеджер с явным выбором активных и удалённых записей."""
+class ActiveObjectsManager(AllObjectsManager):
+    """Только неудалённые записи."""
 
-# class TaskManager(models.Manager):
-#     def get_queryset(self):
-#         return super().get_queryset().filter(categories__deleted_at__isnull=False).distinct()
+    def get_queryset(self):
+        """Исключить записи с заполненной датой удаления."""
+        return super().get_queryset().filter(
+            deleted_at__isnull=True,
+        )
+
+
+class DeletedObjectsManager(AllObjectsManager):
+    """Только мягко удалённые записи."""
+
+    def get_queryset(self):
+        """Выбрать записи с заполненной датой удаления."""
+        return super().get_queryset().filter(
+            deleted_at__isnull=False,
+        )
 

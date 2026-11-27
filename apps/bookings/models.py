@@ -62,7 +62,7 @@ class Booking(UUIDModel, TimeStampModel, SoftDeleteModel):
     )
 
 
-    class Meta:
+    class Meta(SoftDeleteModel.Meta):
         """Порядок выдачи, ограничение дат и индекс для поиска бронирований."""
 
         db_table = 'bookings'

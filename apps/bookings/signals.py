@@ -19,7 +19,7 @@ def remember_status(sender, instance, using, raw=False, update_fields=None, **kw
     if update_fields is not None and "status" not in update_fields:
         return
 
-    previous_status = (sender.objects.using(using).filter(pk=instance.pk)
+    previous_status = (sender.all_objects.using(using).filter(pk=instance.pk)
                        .values_list("status", flat=True).first())
 
     instance._email_status_changed = (previous_status != instance.status)
@@ -43,7 +43,7 @@ def schedule_status_email(sender, instance, created, using, raw=False, **kwargs)
     ):
         return
 
-    booking = (sender.objects.using(using)
+    booking = (sender.all_objects.using(using)
                .select_related("user", "listing__user")
                .get(pk=instance.pk))
 

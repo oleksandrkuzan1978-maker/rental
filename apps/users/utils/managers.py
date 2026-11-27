@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.base.managers import SoftDeleteQuerySet
 
 
-class UserManager(BaseUserManager.from_queryset(SoftDeleteQuerySet)):
+class AllUserManager(BaseUserManager.from_queryset(SoftDeleteQuerySet)):
     """Создание пользователей с нормализацией email и хешированием пароля."""
     # в коде регистрации пользователя использовать этот метод: User.objects.create_user(email=..., password=...)
     def create_user(self, email, password, **extra_fields): # **extra_fields передаёт дополнительные поля:
@@ -56,5 +56,14 @@ class UserManager(BaseUserManager.from_queryset(SoftDeleteQuerySet)):
         #     raise ValueError('Superuser must have is_active=True.')
 
         return self.create_user(email, password, **extra_fields)
+
+class UserManager(AllUserManager):
+    """Создание пользователей и выборка неудалённых аккаунтов."""
+
+    def get_queryset(self):
+        """Исключить мягко удалённые аккаунты."""
+        return super().get_queryset().filter(
+            deleted_at__isnull=True,
+        )
 
 

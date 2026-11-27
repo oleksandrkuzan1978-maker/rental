@@ -56,7 +56,7 @@ class ListingSerializer(ContactModelSerializer):
             return []
 
         return ListingFileSerializer(
-            obj.files.active(),
+            ListingFile.objects.filter(listing=obj),
             many=True,
             context=self.context,
         ).data
@@ -90,7 +90,7 @@ class ListingSerializer(ContactModelSerializer):
     @transaction.atomic
     def _save_listing(self, listing_obj):
         """Проверить владельца и состояние объявления перед сохранением."""
-        owner = User.objects.get(pk=listing_obj.user_id)
+        owner = User.all_objects.get(pk=listing_obj.user_id)
 
         lock_active_user(user=owner)
         # listing_obj._state.adding — служебный признак Django:
@@ -98,7 +98,7 @@ class ListingSerializer(ContactModelSerializer):
         # - False — объект получен из базы или уже был сохранён.
         if not listing_obj._state.adding: # «Если мы редактируем существующее объявление».??? Может, убрать
             # заново получаем объявление из базы. За прошедшее время другой запрос мог мягко удалить объявление.
-            current = Listing.objects.select_for_update().get(
+            current = Listing.all_objects.select_for_update().get(
                 pk=listing_obj.pk,
             )
 

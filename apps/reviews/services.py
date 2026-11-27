@@ -1,4 +1,5 @@
 """Операции создания отзывов на завершённые бронирования."""
+from django.utils import timezone
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
@@ -8,7 +9,7 @@ from apps.bookings.models import Booking
 from apps.bookings.utils.choices import Status
 
 from .models import Review
-
+from .variables import REVIEW_CREATION_PERIOD
 
 def is_booking_tenant(*, user, booking):
     """Проверить, что вошедший в систему пользователь является арендатором брони."""
@@ -19,23 +20,33 @@ def create_review(*, user, booking_id, rating, comment=""):
     """Создать отзыв пользователя на собственную завершённую бронь."""
     user = lock_active_user(user=user)
 
-    booking = Booking.objects.select_for_update().get(
+    booking = Booking.all_objects.select_for_update().get(
         pk=booking_id,
     )
 
     if not is_booking_tenant(user=user, booking=booking):
         raise PermissionDenied(
-            _("Можно оставить отзыв только о своей брони.")
+            _("You can only review your own bookings.")
         )
 
     if booking.deleted_at is not None:
         raise ValidationError(
-            _("Нельзя оставить отзыв для удалённой брони.")
+            _("You cannot review a deleted booking.")
         )
 
     if booking.status != Status.COMPLETED:
         raise ValidationError(
-            _("Отзыв можно оставить только для завершённой брони.")
+            _("Only completed bookings can be reviewed.")
+        )
+
+    if booking.decided_at is None:
+        raise ValidationError(
+            _("The booking completion time is not recorded.")
+        )
+
+    if timezone.now() > booking.decided_at + REVIEW_CREATION_PERIOD:
+        raise ValidationError(
+            _("The review submission period has expired.")
         )
 
     review = Review(
@@ -65,15 +76,15 @@ def update_review(*, user, review_id, rating, comment=""):
     user = lock_active_user(user=user)
 
     # Пока только узнаём, к какой брони относится отзыв.
-    reference = Review.objects.only("booking_id").get(
+    reference = Review.all_objects.only("booking_id").get(
         pk=review_id,
     )
 
     # Сначала блокируем бронь, затем связанный с ней отзыв.
-    booking = Booking.objects.select_for_update().get(
+    booking = Booking.all_objects.select_for_update().get(
         pk=reference.booking_id,
     )
-    review = Review.objects.select_for_update().get(
+    review = Review.all_objects.select_for_update().get(
         pk=review_id,
         booking_id=booking.pk,
     )

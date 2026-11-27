@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth import get_user_model
@@ -12,7 +13,7 @@ EMAIL_TAKEN = _("Email already exists")
 
 def email_exists(email):
     """Проверить, занят ли email, без учёта регистра."""
-    return User.objects.filter(email__iexact=email).exists()
+    return User.all_objects.filter(email__iexact=email).exists()
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     """Сериализатор регистрации пользователя по имени, email и паролю."""
@@ -28,7 +29,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate_email(self, email):
         """Привести email к нижнему регистру и проверить, что он свободен."""
         email = email.lower()
-        if User.objects.filter(email__iexact=email).first():
+        if User.all_objects.filter(email__iexact=email).first():
             raise serializers.ValidationError(EMAIL_TAKEN)
         return email
 
@@ -111,6 +112,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['new_password'])
         user.save(update_fields=['password'])
         return user
+
+
+class RefreshSerializer(TokenRefreshSerializer):
+    """Обновить JWT или вернуть отказ, если пользователь недоступен."""
+
+    def validate(self, attrs):
+        """Преобразовать отсутствие пользователя в ошибку аутентификации."""
+        try:
+            return super().validate(attrs)
+
+        except User.DoesNotExist:
+            raise AuthenticationFailed(
+                self.error_messages["no_active_account"],
+                code="no_active_account",
+            ) from None
 
 
 

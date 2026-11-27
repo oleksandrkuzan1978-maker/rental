@@ -1,4 +1,3 @@
-from django.contrib.auth import user_logged_in
 from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated

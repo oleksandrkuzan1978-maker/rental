@@ -163,7 +163,7 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
         verbose_name=_("Check-out by"),
     )
 
-    class Meta:
+    class Meta(SoftDeleteModel.Meta):
         """Порядок выдачи и допустимые значения цены, комнат и типа жилья."""
 
         db_table = 'listings'
@@ -264,7 +264,7 @@ class ListingFile(UUIDModel, TimeStampModel, SoftDeleteModel):
                                 , related_name="files"
                                 , verbose_name=_("Listing"))
 
-    class Meta:
+    class Meta(SoftDeleteModel.Meta):
         """Настройки таблицы и порядка выдачи вложений."""
 
         db_table = 'listing_files'

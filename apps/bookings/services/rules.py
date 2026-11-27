@@ -16,7 +16,6 @@ def listing_is_available(listing):
         and User.objects.filter(
             pk=listing.user_id,
             is_active=True,
-            deleted_at__isnull=True,
         ).exists()
     )
 
@@ -34,7 +33,7 @@ def rejection_reason(listing, booking):
         return DecisionReason.PETS_NOT_ALLOWED
 
     # Только подтверждённая бронь занимает даты.
-    occupied = Booking.objects.select_for_update().filter(
+    occupied = Booking.all_objects.select_for_update().filter(
         listing_id=listing.pk,
         status=Status.CONFIRMED,
         start_date__lt=booking.end_date,

@@ -1,9 +1,11 @@
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from apps.bookings.models import Booking
 from apps.reviews.models import Review
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.serializers import as_serializer_error
 
+from .services import create_review
 
 class ReviewListSerializer(serializers.ModelSerializer):
     """Заготовка сериализатора для списка отзывов."""
@@ -12,38 +14,36 @@ class ReviewListSerializer(serializers.ModelSerializer):
 
 
 class ReviewCreateSerializer(serializers.ModelSerializer):
-
-    """Принять данные отзыва и проверить право автора оставить его."""
+    """Принять данные и создать отзыв через сервис."""
 
     class Meta:
-        """Указать поля для создания отзыва и защитить его идентификатор от записи."""
+        """Поля создания отзыва."""
 
         model = Review
-        fields = ['id', 'booking', 'rating', 'comment']
-        read_only_fields = ['id']
+        fields = ("id", "booking", "rating", "comment")
+        read_only_fields = ("id",)
 
-    def validate(self, attrs):
-        """Проверить, что бронь принадлежит автору, завершена и дата выезда прошла."""
+    def create(self, validated_data):
+        """Создать отзыв на собственную завершённую бронь."""
+        booking = validated_data["booking"]
 
-        booking = attrs['booking']
-        user = self.context['request'].user
+        try:
+            return create_review(
+                user=self.context["request"].user,
+                booking_id=booking.pk,
+                rating=validated_data["rating"],
+                comment=validated_data.get("comment", ""),
+            )
 
-        if booking.user_id != user.id:
+        except Booking.DoesNotExist:
             raise serializers.ValidationError({
-                'booking': _('You can only review your own bookings.')
-            })
+                "booking": _("The booking no longer exists."),
+            }) from None
 
-        if booking.status != Booking.Status.COMPLETED:
-            raise serializers.ValidationError({
-                'booking': _('Only completed bookings can be reviewed.')
-            })
-
-        if booking.end_date >= timezone.localdate():
-            raise serializers.ValidationError({
-                'booking': _('A review can only be submitted after the booking ends.')
-            })
-
-        return attrs
+        except DjangoValidationError as error:
+            raise serializers.ValidationError(
+                as_serializer_error(error)
+            ) from error
 
 
 class ReviewUpdateSerializer(serializers.ModelSerializer):

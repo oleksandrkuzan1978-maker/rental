@@ -21,7 +21,7 @@ class Review(UUIDModel, TimeStampModel, SoftDeleteModel):
     comment = models.TextField(blank=True, validators=[MaxLengthValidator(5000)]
                                , verbose_name=_('Comment'))
 
-    class Meta:
+    class Meta(SoftDeleteModel.Meta):
         """Настройки таблицы, сортировки и ограничения оценки от 1 до 5."""
 
         db_table = 'reviews'

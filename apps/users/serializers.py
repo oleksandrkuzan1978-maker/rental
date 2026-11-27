@@ -74,7 +74,7 @@ class ChangeEmailSerializer(serializers.Serializer):
         email = value.strip().lower()
         user = self.context["request"].user
 
-        if User.objects.filter(
+        if User.all_objects.filter(
             email__iexact=email,
         ).exclude(pk=user.pk).exists():
             raise serializers.ValidationError(
@@ -92,7 +92,7 @@ class ChangeEmailSerializer(serializers.Serializer):
                 instance.save(update_fields=["email", "updated_at"])
         except IntegrityError as error:
             # Адрес мог занять другой запрос после проверки.
-            email_taken = User.objects.filter(
+            email_taken = User.all_objects.filter(
                 email__iexact=email,
             ).exclude(pk=instance.pk).exists()
 
