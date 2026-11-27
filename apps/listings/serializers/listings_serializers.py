@@ -20,6 +20,32 @@ class ListingFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'file']
 
 
+class ListingListSerializer(serializers.ModelSerializer):
+    """Краткая карточка опубликованного объявления."""
+
+    city_name = serializers.CharField(
+        source="city.name",
+        read_only=True,
+        default=None,
+    )
+    district_name = serializers.CharField(
+        source="city_district.name",
+        read_only=True,
+        default=None,
+    )
+    files = ListingFileSerializer(many=True, read_only=True)
+
+    class Meta:
+        """Поля карточки, предназначенные для чтения."""
+
+        model = Listing
+        fields = ("id", "title", "city", "city_name",
+                  "city_district", "district_name", "property_type", "price_per_night",
+                  "rooms", "max_guests", "instant_booking_enabled", "files",
+        )
+        read_only_fields = fields
+
+
 class ListingSerializer(ContactModelSerializer):
     """Сериализатор объявлений со списком прикреплённых файлов."""
     files = serializers.SerializerMethodField()

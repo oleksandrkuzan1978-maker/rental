@@ -1,11 +1,11 @@
 """Публичные представления приложения объявлений."""
 
-from .listings_views import ListingCreateView, ListingUpdateView, ListingDetailView
+from .listings_views import ListingListCreateView, ListingUpdateView, ListingDetailView
 from .locations_views import CityDistrictListView
 
 
 __all__ = [
-    "ListingCreateView",
+    "ListingListCreateView",
     "ListingUpdateView",
     "ListingDetailView",
     "CityDistrictListView",

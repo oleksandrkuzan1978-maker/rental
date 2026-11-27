@@ -126,8 +126,6 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
         choices=ListingStatus,
         default=ListingStatus.DRAFT,
     )
-    #is_active = models.BooleanField(default=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
     property_type = models.CharField(max_length=15, choices=Types, verbose_name=_("Type"))
 
     city = models.ForeignKey(City, on_delete=models.PROTECT, null=True, blank=True
@@ -249,24 +247,6 @@ class Listing(UUIDModel, TimeStampModel, SoftDeleteModel):
         if errors:
             raise ValidationError(errors)
 
-    #
-    # def soft_delete(self):
-    #     """Деактивировать объявление и сохранить время его мягкого удаления."""
-    #     # подумать: в будущем добавить менеджер, который будет
-    #     # автоматически исключать мягко удалённые объявления из обычной выдачи.
-    #     with transaction.atomic():
-    #         if self.deleted_at is not None: # защита от повторного мягкого удаления
-    #             return
-    #
-    #         self.status = ListingStatus.PAUSED
-    #         self.deleted_at = timezone.now()
-    #
-    #         self.save(update_fields=[
-    #             'status',
-    #             'deleted_at',
-    #             'updated_at'
-    #         ])
-
     def __str__(self):
         """Вернуть заголовок объявления вместе с его идентификатором."""
         return f"Listing: '{self.title}', ({self.pk})"
@@ -283,7 +263,6 @@ class ListingFile(UUIDModel, TimeStampModel, SoftDeleteModel):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE
                                 , related_name="files"
                                 , verbose_name=_("Listing"))
-    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         """Настройки таблицы и порядка выдачи вложений."""

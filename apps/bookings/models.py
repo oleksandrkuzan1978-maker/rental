@@ -60,7 +60,6 @@ class Booking(UUIDModel, TimeStampModel, SoftDeleteModel):
         validators=[MaxValueValidator(MAX_BOOKING_EDITS)],
         verbose_name=_("Number of edits"),
     )
-    deleted_at = models.DateTimeField(null=True, blank=True)
 
 
     class Meta:

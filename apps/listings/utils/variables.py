@@ -9,3 +9,5 @@ MAX_ROOMS = 20 # Максимально возможное кол-во комн�
 MAX_FILES_PER_LISTING = 7 # Максимальное количество файлов (картинок) объявления
 
 MIN_PRICE_PER_NIGHT = Decimal("10.00") # минимально допустимая цена проживания за ночь (поле price_per_night)
+
+ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]

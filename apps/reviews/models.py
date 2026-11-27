@@ -1,5 +1,4 @@
 """Модель отзыва и проверки его связи с бронированием."""
-from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator, MaxLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -21,7 +20,6 @@ class Review(UUIDModel, TimeStampModel, SoftDeleteModel):
                                               , verbose_name=_('Rating'))
     comment = models.TextField(blank=True, validators=[MaxLengthValidator(5000)]
                                , verbose_name=_('Comment'))
-    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         """Настройки таблицы, сортировки и ограничения оценки от 1 до 5."""

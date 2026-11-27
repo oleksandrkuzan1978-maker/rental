@@ -5,9 +5,9 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.utils.translation import gettext_lazy as _
 from pathlib import Path
 import re
-# Допустимые расширения файлов
 
-ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "pdf"]
+from ..utils.variables import ALLOWED_EXTENSIONS
+# Допустимые расширения файлов
 
 validate_file_extension = FileExtensionValidator(
     allowed_extensions=ALLOWED_EXTENSIONS,

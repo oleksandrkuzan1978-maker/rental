@@ -56,6 +56,8 @@ class ProtectedDeleteModel(models.Model):
 class SoftDeleteModel(ProtectedDeleteModel):
     """Объект с мягким удалением через общие бизнес-проверки."""
 
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
     objects = SoftDeleteManager()
 
     class Meta:
