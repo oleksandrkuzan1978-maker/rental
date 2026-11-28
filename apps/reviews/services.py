@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
-from apps.base.services.deletion import lock_active_user
+from apps.base.services.access import lock_active_user
 from apps.bookings.models import Booking
 from apps.bookings.utils.choices import Status
 

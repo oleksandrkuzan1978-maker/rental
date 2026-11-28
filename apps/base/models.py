@@ -35,7 +35,7 @@ class ProtectedDeleteModel(models.Model):
 
     def full_delete(self, using=None, keep_parents=False, *, actor=None):
         """Физически удалить объект после проверки прав."""
-        from .services.deletion import require_superuser
+        from .services.access import require_superuser
 
         require_superuser(actor)
 
@@ -83,8 +83,8 @@ class SoftDeleteModel(ProtectedDeleteModel):
         """Явное название операции мягкого удаления."""
         return self.delete(actor=actor)
 
-    def restore(self, *, actor):
+    def restore(self, *, actor, warnings=None):
         """Восстановить запись с проверкой прав и связанных объектов."""
         from .services.restoration import restore_object
 
-        return restore_object(obj=self, actor=actor)
+        return restore_object(obj=self, actor=actor,  warnings=warnings,)

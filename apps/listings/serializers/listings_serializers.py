@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from ..models import Listing, ListingFile
 from apps.base.serializers import ContactModelSerializer
-from apps.base.services.deletion import lock_active_user
+from apps.base.services.access import lock_active_user
 
 
 class ListingFileSerializer(serializers.ModelSerializer):

@@ -11,7 +11,7 @@ from ..utils.variables import (
 )
 from .state import lock_booking
 from .workflow import save_booking_result
-from apps.base.services.deletion import lock_active_user
+from apps.base.services.access import lock_active_user
 
 @transaction.atomic
 def update_booking(*, user, booking_id, changes):

@@ -1,8 +1,10 @@
 """Операции с вложениями объявлений."""
-
+from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
+
+from apps.base.services.access import lock_active_user
 from apps.listings.models import Listing, ListingFile
 from .variables import MAX_FILES_PER_LISTING
 
@@ -51,10 +53,22 @@ def save_listing_file(*, attachment):
     return attachment
 
 
-def add_listing_file(*, listing_id, title, uploaded_file):
-    """Создать вложение объявления с проверкой общего лимита файлов."""
+@transaction.atomic
+def add_listing_file(*, actor, listing_id, title, uploaded_file):
+    """Добавить файл в собственное объявление активного пользователя."""
+    actor = lock_active_user(user=actor)
+
+    listing = Listing.all_objects.select_for_update().get(
+        pk=listing_id,
+    )
+
+    if listing.user_id != actor.pk:
+        raise PermissionDenied(
+            _("You can only upload files to your own listing.")
+        )
+
     attachment = ListingFile(
-        listing_id=listing_id,
+        listing=listing,
         title=title,
         file=uploaded_file,
     )

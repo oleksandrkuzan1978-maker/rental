@@ -8,7 +8,7 @@ class DeleteQuerySet(models.QuerySet):
 
     def full_delete(self, *, actor):
         """Физически удалить выборку от имени суперпользователя."""
-        from .services.deletion import require_superuser
+        from .services.access import require_superuser
 
         require_superuser(actor)
         return super().delete() # удаляет выборку QuerySet

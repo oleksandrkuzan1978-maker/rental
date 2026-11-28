@@ -13,7 +13,7 @@ from apps.listings.utils.variables import MAX_FILES_PER_LISTING
 from apps.reviews.models import Review
 from apps.users.models import User
 
-from .deletion import lock_active_user, require_superuser
+from .access import lock_active_user, require_superuser
 
 
 def _check_file(attachment):
@@ -28,7 +28,7 @@ def _check_file(attachment):
 
 
 @transaction.atomic
-def restore_object(*, obj, actor):
+def restore_object(*, obj, actor, warnings=None):
     """Восстановить запись с проверкой прав и связанных объектов.
 
     Аккаунт восстанавливает суперпользователь, остальные записи —
@@ -69,23 +69,40 @@ def restore_object(*, obj, actor):
             .order_by("pk")
         )
 
+        available_ids = []
+        missing_files = []
+
+        for attachment in attachments:
+            if (
+                    attachment.file.name
+                    and attachment.file.storage.exists(attachment.file.name)
+            ):
+                available_ids.append(attachment.pk)
+            else:
+                missing_files.append({
+                    "id": str(attachment.pk),
+                    "title": attachment.title,
+                })
+
         if (
-            ListingFile.objects.filter(listing=current).count() + len(attachments)
-            > MAX_FILES_PER_LISTING
+                ListingFile.objects.filter(listing=current).count()
+                + len(available_ids)
+                > MAX_FILES_PER_LISTING
         ):
             raise ValidationError(
                 _("The attachment limit has been reached.")
             )
 
-        for attachment in attachments:
-            _check_file(attachment)
-
-        ListingFile.deleted_objects.filter(listing=current).filter(
-            pk__in=[item.pk for item in attachments],
+        ListingFile.deleted_objects.filter(
+            listing=current,
+            pk__in=available_ids,
         ).update(
             deleted_at=None,
             updated_at=now,
         )
+
+        if warnings is not None:
+            warnings.extend(missing_files)
 
         current.status = ListingStatus.PAUSED
         fields.append("status")
