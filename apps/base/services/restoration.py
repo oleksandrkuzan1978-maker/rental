@@ -16,6 +16,16 @@ from apps.users.models import User
 from .access import lock_active_user, require_superuser
 
 
+def _check_restore_permission(*, obj, owner_id, actor):
+    """Allow owners to restore records unless deletion requires a superuser."""
+    if actor.is_superuser:
+        return
+    if owner_id != actor.pk:
+        raise PermissionDenied(_("You can only restore your own records."))
+    if obj.restore_requires_superuser:
+        raise PermissionDenied(_("Only a superuser can restore this record."))
+
+
 def _check_file(attachment):
     """Проверить наличие восстанавливаемого файла в хранилище."""
     if (
@@ -32,7 +42,8 @@ def restore_object(*, obj, actor, warnings=None):
     """Восстановить запись с проверкой прав и связанных объектов.
 
     Аккаунт восстанавливает суперпользователь, остальные записи —
-    их владелец. Вернуть актуальный объект из базы данных.
+    их владелец или суперпользователь с учётом запрета восстановления.
+    Вернуть актуальный объект из базы данных.
     """
     actor = lock_active_user(user=actor)
 
@@ -53,22 +64,27 @@ def restore_object(*, obj, actor, warnings=None):
     elif isinstance(obj, Listing):
         current = Listing.all_objects.select_for_update().get(pk=obj.pk)
 
-        if current.user_id != actor.pk:
-            raise PermissionDenied(
-                _("You can only restore your own listing.")
-            )
+        _check_restore_permission(
+            obj=current, owner_id=current.user_id, actor=actor,
+        )
 
         if current.deleted_at is None:
             return current
 
         # Выбираем вложения, удалённые вместе с объявлением.
-        attachments = list(
+        attachments_query = (
             ListingFile.deleted_objects.select_for_update()
             .filter(listing=current)
             .filter(deleted_at=current.deleted_at)
             .order_by("pk")
         )
 
+        if not actor.is_superuser:
+            attachments_query = attachments_query.filter(
+                restore_requires_superuser=False,
+            )
+
+        attachments = list(attachments_query)
         available_ids = []
         missing_files = []
 
@@ -98,6 +114,7 @@ def restore_object(*, obj, actor, warnings=None):
             pk__in=available_ids,
         ).update(
             deleted_at=None,
+            restore_requires_superuser=False,
             updated_at=now,
         )
 
@@ -120,10 +137,9 @@ def restore_object(*, obj, actor, warnings=None):
             listing_id=listing.pk,
         )
 
-        if listing.user_id != actor.pk:
-            raise PermissionDenied(
-                _("You can only restore files from your own listing.")
-            )
+        _check_restore_permission(
+            obj=current, owner_id=listing.user_id, actor=actor,
+        )
 
         if current.deleted_at is None:
             return current
@@ -146,10 +162,9 @@ def restore_object(*, obj, actor, warnings=None):
 
         _listing, current = lock_booking(obj.pk)
 
-        if current.user_id != actor.pk:
-            raise PermissionDenied(
-                _("You can only restore your own booking.")
-            )
+        _check_restore_permission(
+            obj=current, owner_id=current.user_id, actor=actor,
+        )
 
         if current.deleted_at is None:
             return current
@@ -176,10 +191,9 @@ def restore_object(*, obj, actor, warnings=None):
             booking_id=booking.pk,
         )
 
-        if booking.user_id != actor.pk:
-            raise PermissionDenied(
-                _("You can only restore your own review.")
-            )
+        _check_restore_permission(
+            obj=current, owner_id=booking.user_id, actor=actor,
+        )
 
         if current.deleted_at is None:
             return current
@@ -200,6 +214,8 @@ def restore_object(*, obj, actor, warnings=None):
         )
 
     current.deleted_at = None
+    current.restore_requires_superuser = False
+    fields.append("restore_requires_superuser")
     current.save(update_fields=fields)
 
     return current

@@ -16,13 +16,14 @@ from apps.users.models import User
 from .access import lock_active_user
 
 
-def _mark_deleted(obj, *, now):
+def _mark_deleted(obj, *, now, actor):
     """Записать дату удаления после выполнения бизнес-проверок."""
     if obj.deleted_at is not None:
         return
 
     obj.deleted_at = now
-    fields = ["deleted_at", "updated_at"]
+    obj.restore_requires_superuser = actor.is_superuser
+    fields = ["deleted_at", "restore_requires_superuser", "updated_at"]
 
     if isinstance(obj, User):
         obj.is_active = False
@@ -37,6 +38,7 @@ def _mark_deleted(obj, *, now):
     if isinstance(obj, Listing):
         ListingFile.objects.filter(listing=obj).update(
             deleted_at=now,
+            restore_requires_superuser=actor.is_superuser,
             updated_at=now,
         )
 
@@ -59,7 +61,7 @@ def _cancel_booking(booking, *, reason, now):
         "updated_at",
     ])
 
-def _delete_account(user, *, now):
+def _delete_account(user, *, now, actor):
     """Удалить аккаунт и собственные записи при отсутствии CONFIRMED."""
     owned_ids = set(
         Listing.all_objects.filter(user_id=user.pk)
@@ -105,7 +107,7 @@ def _delete_account(user, *, now):
 
         # Чужие заявки сохраняем в истории их арендаторов.
         if booking.user_id == user.pk:
-            _mark_deleted(booking, now=now)
+            _mark_deleted(booking, now=now, actor=actor)
 
     reviews = (
         Review.all_objects.select_for_update()
@@ -114,13 +116,13 @@ def _delete_account(user, *, now):
     )
 
     for review in reviews:
-        _mark_deleted(review, now=now)
+        _mark_deleted(review, now=now, actor=actor)
 
     for listing in listings:
         if listing.user_id == user.pk:
-            _mark_deleted(listing, now=now)
+            _mark_deleted(listing, now=now, actor=actor)
 
-    _mark_deleted(user, now=now)
+    _mark_deleted(user, now=now, actor=actor)
 
 
 @transaction.atomic
@@ -129,15 +131,23 @@ def soft_delete_object(*, obj, actor):
     actor = lock_active_user(user=actor)
 
     if isinstance(obj, User):
-        if obj.pk != actor.pk:
+        if obj.pk != actor.pk and not actor.is_superuser:
             raise PermissionDenied(_("You can only delete your own account."))
 
-        _delete_account(actor, now=timezone.now())
+        if obj.pk == actor.pk:
+            user = actor
+        else:
+            user = User.all_objects.select_for_update().get(pk=obj.pk)
+
+        if user.deleted_at is not None:
+            return 0, {}
+
+        _delete_account(user, now=timezone.now(), actor=actor)
 
     elif isinstance(obj, Listing):
         listing = Listing.all_objects.select_for_update().get(pk=obj.pk)
 
-        if listing.user_id != actor.pk:
+        if listing.user_id != actor.pk and not actor.is_superuser:
             raise PermissionDenied(_("This listing belongs to another user."))
 
         if listing.deleted_at is not None:
@@ -166,7 +176,7 @@ def soft_delete_object(*, obj, actor):
                 now=now,
             )
 
-        _mark_deleted(listing, now=now)
+        _mark_deleted(listing, now=now, actor=actor)
 
 
     elif isinstance(obj, ListingFile):
@@ -182,7 +192,7 @@ def soft_delete_object(*, obj, actor):
             listing_id=listing.pk,
         )
 
-        if listing.user_id != actor.pk:
+        if listing.user_id != actor.pk and not actor.is_superuser:
             raise PermissionDenied(
                 _("This file belongs to another user's listing.")
             )
@@ -190,7 +200,7 @@ def soft_delete_object(*, obj, actor):
         if attachment.deleted_at is not None:
             return 0, {}
 
-        _mark_deleted(attachment, now=timezone.now())
+        _mark_deleted(attachment, now=timezone.now(), actor=actor)
 
 
     elif isinstance(obj, Booking):
@@ -199,7 +209,7 @@ def soft_delete_object(*, obj, actor):
 
         _listing, booking = lock_booking(obj.pk)
 
-        if booking.user_id != actor.pk:
+        if booking.user_id != actor.pk and not actor.is_superuser:
             raise PermissionDenied(_("This booking belongs to another user."))
 
         if booking.deleted_at is not None:
@@ -224,18 +234,18 @@ def soft_delete_object(*, obj, actor):
             reason=DecisionReason.USER_CANCELLED,
             now=now,
         )
-        _mark_deleted(booking, now=now)
+        _mark_deleted(booking, now=now, actor=actor)
 
     elif isinstance(obj, Review):
         review = Review.all_objects.select_for_update().get(pk=obj.pk)
 
-        if review.booking.user_id != actor.pk:
+        if review.booking.user_id != actor.pk and not actor.is_superuser:
             raise PermissionDenied(_("This review belongs to another user."))
 
         if review.deleted_at is not None:
             return 0, {}
 
-        _mark_deleted(review, now=timezone.now())
+        _mark_deleted(review, now=timezone.now(), actor=actor)
 
     else:
         raise TypeError(_("Soft deletion is not supported for this model."))

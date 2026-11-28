@@ -57,6 +57,7 @@ class SoftDeleteModel(ProtectedDeleteModel):
     """Объект с мягким удалением через общие бизнес-проверки."""
 
     deleted_at = models.DateTimeField(null=True, blank=True)
+    restore_requires_superuser = models.BooleanField(default=False, editable=False)
 
     objects = ActiveObjectsManager()
     all_objects = AllObjectsManager()
